@@ -308,13 +308,27 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 
 const SUPA_URL = 'https://xeiiqimwdosxmrdgvrbj.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlaWlxaW13ZG9zeG1yZGd2cmJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMDUyNzEsImV4cCI6MjA5NDc4MTI3MX0.8TfUrhVBq6GVwOpPNu7HqQgVHdZN8Atp782TdB8Ygao';
 const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+function setConnStatus(ok, msg) {
+  let el = document.getElementById('conn-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'conn-status';
+    el.style.cssText = 'position:fixed;top:8px;right:12px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;z-index:9999;letter-spacing:.3px';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.background = ok ? 'rgba(39,174,96,.25)' : 'rgba(192,57,43,.25)';
+  el.style.color = ok ? '#4ec87a' : '#e06b5f';
+  el.style.border = `1px solid ${ok ? 'rgba(39,174,96,.4)' : 'rgba(192,57,43,.4)'}`;
+}
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -377,6 +391,7 @@ let updateStatus = 'pending';
 
 async function loadFromDB() {
   showLoading(true);
+  setConnStatus(null, '⟳ Conectando...');
   try {
     const { data: dbUnits, error: uErr } = await db.from('units').select('*').order('created_at', {ascending:true});
     if (uErr) throw uErr;
@@ -397,9 +412,11 @@ async function loadFromDB() {
           ts: new Date(e.created_at).getTime()
         }))
     }));
+    setConnStatus(true, '● Conectado');
   } catch(err) {
     console.error('Error cargando datos:', err);
-    showToast('Error de conexión — modo offline');
+    setConnStatus(false, '● Sin conexión: ' + (err.message || err));
+    showToast('Error: ' + (err.message || 'Sin conexión'));
   }
   showLoading(false);
   renderHome();
