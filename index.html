@@ -187,6 +187,58 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .db-prog-fill.pf-done{background:#4ec87a}
 .db-empty{grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--text2)}
 .db-empty .dei{font-size:40px;margin-bottom:10px}
+
+/* ── ANDON ── */
+:root{--andon-normal:#27ae60;--andon-warning:#e8b800;--andon-stopped:#c0392b;--andon-waiting:#2980b9}
+.andon-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ai-normal{background:var(--andon-normal);box-shadow:0 0 6px var(--andon-normal)}
+.ai-warning{background:var(--andon-warning);box-shadow:0 0 6px var(--andon-warning)}
+.ai-stopped{background:var(--andon-stopped);box-shadow:0 0 8px var(--andon-stopped);animation:andon-pulse 1s infinite}
+.ai-waiting{background:var(--andon-waiting);box-shadow:0 0 6px var(--andon-waiting)}
+@keyframes andon-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.uc-andon-bar{height:4px;width:100%}
+.uca-normal{background:var(--andon-normal)}
+.uca-warning{background:var(--andon-warning)}
+.uca-stopped{background:var(--andon-stopped)}
+.uca-waiting{background:var(--andon-waiting)}
+.andon-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 14px 10px}
+.aq-btn{padding:9px 4px;border-radius:10px;border:2px solid var(--border);text-align:center;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.2px;transition:border-color .15s,background .15s}
+.aq-btn:active{opacity:.8}
+.aq-btn.aq-normal.aq-sel{border-color:var(--andon-normal);background:rgba(39,174,96,.15);color:var(--andon-normal)}
+.aq-btn.aq-warning.aq-sel{border-color:var(--andon-warning);background:rgba(232,184,0,.12);color:var(--andon-warning)}
+.aq-btn.aq-stopped.aq-sel{border-color:var(--andon-stopped);background:rgba(192,57,43,.15);color:var(--andon-stopped)}
+.aq-btn.aq-waiting.aq-sel{border-color:var(--andon-waiting);background:rgba(41,128,185,.15);color:var(--andon-waiting)}
+
+/* ── TV MODE ── */
+.tv-topbar{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.tv-topbar h1{font-size:20px;font-weight:800;flex:1}
+.tv-clock{font-size:22px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.tv-exit{font-size:12px;padding:6px 14px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer}
+.tv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;overflow-y:auto}
+@media(min-width:900px){.tv-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:500px){.tv-grid{grid-template-columns:1fr}}
+.tv-card{border-radius:16px;border:3px solid var(--border);overflow:hidden;background:var(--surface);cursor:pointer}
+.tv-card.tc-normal{border-color:var(--andon-normal)}
+.tv-card.tc-warning{border-color:var(--andon-warning)}
+.tv-card.tc-stopped{border-color:var(--andon-stopped);animation:andon-pulse 1.2s infinite}
+.tv-card.tc-waiting{border-color:var(--andon-waiting)}
+.tv-andon-strip{height:8px}
+.tas-normal{background:var(--andon-normal)}
+.tas-warning{background:var(--andon-warning)}
+.tas-stopped{background:var(--andon-stopped)}
+.tas-waiting{background:var(--andon-waiting)}
+.tv-card-body{padding:14px 16px 12px}
+.tv-unit-num{font-size:26px;font-weight:900;line-height:1}
+.tv-model{font-size:13px;color:var(--text2);margin-top:3px}
+.tv-stage{font-size:15px;font-weight:700;margin:10px 0 4px;color:var(--text)}
+.tv-pct{font-size:28px;font-weight:900;color:var(--gold);line-height:1}
+.tv-pct.pct-done{color:var(--andon-normal)}
+.tv-footer{padding:10px 16px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.tv-alert-badge{font-size:11px;font-weight:700;color:var(--andon-stopped);background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);border-radius:20px;padding:3px 10px}
+.tv-ok-badge{font-size:11px;font-weight:700;color:var(--andon-normal);background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.25);border-radius:20px;padding:3px 10px}
+.tv-prog-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;flex:1}
+.tv-prog-fill{height:100%;border-radius:4px;background:var(--gold)}
+.tv-prog-fill.pf-done{background:var(--andon-normal)}
 </style>
 </head>
 <body>
@@ -244,6 +296,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <h1>Panel General</h1>
       <div class="sub" id="db-date"></div>
     </div>
+    <div onclick="openTV()" style="width:36px;height:36px;border-radius:50%;background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Modo TV / Piso">📺</div>
     <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">⟳</div>
   </div>
   <!-- STATS BAR -->
@@ -252,6 +305,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="scroll-body">
     <div class="db-grid" id="db-grid"></div>
   </div>
+</div>
+
+<!-- ══════════════════ SCREEN: TV / PISO ══════════════════ -->
+<div class="screen" id="screen-tv" style="background:#0a0b0f">
+  <div class="tv-topbar">
+    <div style="flex:1">
+      <h1 style="color:#fff">SG Trailers — Piso</h1>
+      <div style="font-size:11px;color:var(--text3);margin-top:1px" id="tv-date"></div>
+    </div>
+    <div id="tv-clock" class="tv-clock">00:00</div>
+    <div onclick="goHome()" class="tv-exit">✕ Salir</div>
+  </div>
+  <div class="tv-grid" id="tv-grid"></div>
 </div>
 
 <!-- HIDDEN CAMERA INPUT -->
@@ -481,14 +547,16 @@ const MODELS = [
 ];
 
 const STAGES_PROD = [
-  'Chasis / Estructura base',
+  'Chasis / Estructura',
   'Soportes y refuerzos',
   'Ejes y suspensión',
-  'Piso (decking)',
-  'Sistema hidráulico / tilt',
-  'Cableado frenos y luces',
+  'Piso y rampas',
+  'Sistema hidráulico',
+  'Cableado y luces',
   'Pintura y acabados',
-  'Inspección final',
+  'Ensamble final',
+  'QA / Inspección',
+  'Entrega',
 ];
 
 const STAGES_REP = [
@@ -497,8 +565,17 @@ const STAGES_REP = [
   'Reparación / modificación',
   'Montaje',
   'Prueba y revisión',
+  'Limpieza y acabado',
+  'QA / Inspección',
   'Entrega',
 ];
+
+const ANDON_LABELS = {
+  normal:  {icon:'🟢', txt:'Normal',   cls:'normal'},
+  warning: {icon:'🟡', txt:'Atención', cls:'warning'},
+  stopped: {icon:'🔴', txt:'Parado',   cls:'stopped'},
+  waiting: {icon:'🔵', txt:'Esperando',cls:'waiting'},
+};
 
 const MATERIALS_CATALOG = [
   {id:'piso_madera',   icon:'🪵', name:'Piso de madera (decking)'},
@@ -562,6 +639,7 @@ async function syncToSupabase() {
       const row = {
         local_id: u.id, type: u.type, model: u.model, num: u.num,
         stage_idx: u.stageIdx,
+        andon_status: u.andonStatus || 'normal',
         rep_reason: u.repReason || null,
         rep_deadline: u.repDeadline || null,
       };
@@ -626,6 +704,7 @@ async function loadFromDB() {
         id: u.local_id || String(u.id),
         type: u.type, model: u.model, num: u.num,
         stageIdx: u.stage_idx || 0,
+        andonStatus: u.andon_status || 'normal',
         repReason: u.rep_reason, repDeadline: u.rep_deadline,
         createdAt: new Date(u.created_at).getTime(),
         entries: (dbEntries || [])
@@ -668,6 +747,7 @@ async function saveUnit(u) {
     const row = {
       local_id: u.id, type: u.type, model: u.model, num: u.num,
       stage_idx: u.stageIdx,
+      andon_status: u.andonStatus || 'normal',
       rep_reason: u.repReason || null,
       rep_deadline: u.repDeadline || null,
     };
@@ -837,15 +917,21 @@ function unitCard(u) {
   const badgeCls = u.type === 'prod' ? 'badge-prod' : 'badge-rep';
   const badgeTxt = u.type === 'prod' ? 'Producción' : 'Reparación';
   const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model};
+  const andon = u.andonStatus || 'normal';
+  const andonInfo = ANDON_LABELS[andon];
   return `
   <div class="unit-card" onclick="openUnit('${u.id}')">
+    <div class="uc-andon-bar uca-${andon}"></div>
     <div class="uc-head">
       <div class="unit-tag">${u.type==='rep'?'🔧':'🏗️'}</div>
       <div class="uc-info">
         <h2>${modelObj.name} ${u.num}</h2>
         <div class="uc-sub">${modelObj.sub||''} · ${stageLabel(u)}</div>
       </div>
-      <span class="uc-badge ${badgeCls}">${badgeTxt}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+        <span class="uc-badge ${badgeCls}">${badgeTxt}</span>
+        <span style="font-size:9px;font-weight:700;color:${andon==='normal'?'var(--andon-normal)':andon==='warning'?'var(--andon-warning)':andon==='stopped'?'var(--andon-stopped)':'var(--andon-waiting)'}">${andonInfo.icon} ${andonInfo.txt}</span>
+      </div>
     </div>
     <div class="uc-progress">
       <div class="prog-labels"><span>${stageLabel(u)}</span><span>${pct}%</span></div>
@@ -880,11 +966,21 @@ function renderUnitFeed() {
     `<div class="stage-dot ${i < u.stageIdx ? 'done' : i === u.stageIdx ? 'current' : ''}"></div>`
   ).join('');
 
+  const andon = u.andonStatus || 'normal';
   let html = `
   <div class="stage-bar">
-    <div class="stage-label">Etapa actual · ${pct}% completado</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <div class="stage-label" style="flex:1;margin:0">Etapa actual · ${pct}% completado</div>
+      <div class="andon-indicator ai-${andon}"></div>
+    </div>
     <div class="stage-name">${stageLabel(u)}</div>
     <div class="stage-dots">${dots}</div>
+  </div>
+  <div class="andon-quick">
+    ${['normal','warning','stopped','waiting'].map(s => {
+      const a = ANDON_LABELS[s];
+      return `<div class="aq-btn aq-${s}${s===andon?' aq-sel':''}" onclick="setAndon('${s}')">${a.icon}<br>${a.txt}</div>`;
+    }).join('')}
   </div>`;
 
   if (u.type === 'rep' && u.repDeadline) {
@@ -1185,7 +1281,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function goHome() { activeUnitId = null; showScreen('screen-home'); }
+function goHome() { activeUnitId = null; clearInterval(tvClockInterval); showScreen('screen-home'); }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1455,6 +1551,82 @@ async function manualSync() {
   }
 }
 
+// ── ANDON ─────────────────────────────────────────────────────────────────────
+
+async function setAndon(status) {
+  const u = getUnit(activeUnitId);
+  if (!u) return;
+  u.andonStatus = status;
+  renderUnitFeed();
+  renderHome();
+  await saveUnit(u);
+  showToast(`Estado: ${ANDON_LABELS[status].icon} ${ANDON_LABELS[status].txt}`);
+}
+
+// ── TV MODE ───────────────────────────────────────────────────────────────────
+
+let tvClockInterval = null;
+
+function openTV() {
+  renderTV();
+  showScreen('screen-tv');
+  // start clock
+  clearInterval(tvClockInterval);
+  updateTVClock();
+  tvClockInterval = setInterval(updateTVClock, 1000);
+}
+
+function updateTVClock() {
+  const now = new Date();
+  const hm = now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+  const el = document.getElementById('tv-clock');
+  if (el) el.textContent = hm;
+}
+
+function renderTV() {
+  document.getElementById('tv-date').textContent = fmtDate(Date.now());
+  const grid = document.getElementById('tv-grid');
+  if (!units.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:#555;font-size:18px">Sin unidades en piso</div>`;
+    return;
+  }
+  grid.innerHTML = [...units]
+    .sort((a, b) => {
+      // stopped first, then warning, then waiting, then normal
+      const order = {stopped:0, warning:1, waiting:2, normal:3};
+      return (order[a.andonStatus||'normal'] || 3) - (order[b.andonStatus||'normal'] || 3);
+    })
+    .map(u => tvCard(u)).join('');
+}
+
+function tvCard(u) {
+  const pct      = stagePct(u);
+  const stages   = getStages(u);
+  const stage    = stages[u.stageIdx] || 'Completado';
+  const isDone   = u.stageIdx >= stages.length - 1;
+  const hasAlert = u.entries.some(e => e.type === 'material' && e.status === 'pending');
+  const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model, sub: ''};
+  const andon    = u.andonStatus || 'normal';
+  const fillCls  = isDone ? 'pf-done' : '';
+
+  return `
+  <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
+    <div class="tv-andon-strip tas-${andon}"></div>
+    <div class="tv-card-body">
+      <div class="tv-unit-num">${u.num}</div>
+      <div class="tv-model">${modelObj.name} · ${u.type === 'rep' ? 'Reparación' : 'Producción'}</div>
+      <div class="tv-stage">${stage}</div>
+      <div class="tv-pct ${isDone?'pct-done':''}">${pct}<span style="font-size:14px;font-weight:600;opacity:.6">%</span></div>
+    </div>
+    <div class="tv-footer">
+      <div class="tv-prog-bar"><div class="tv-prog-fill ${fillCls}" style="width:${pct}%"></div></div>
+      ${hasAlert
+        ? `<span class="tv-alert-badge">⚠ Material</span>`
+        : `<span class="tv-ok-badge">✓ OK</span>`}
+    </div>
+  </div>`;
+}
+
 // ── DASHBOARD ────────────────────────────────────────────────────────────────
 
 function openDashboard() {
@@ -1500,11 +1672,16 @@ function dashboardCard(u) {
   const pillCls    = isDone ? 'pill-done' : u.type === 'rep' ? 'pill-rep' : '';
   const fillCls    = isDone ? 'pf-done' : '';
 
+  const andon = u.andonStatus || 'normal';
+  const andonCardCls = `db-card-${andon}`;
   return `
-  <div class="db-card ${hasAlert ? 'db-alert' : ''}" onclick="openUnit('${u.id}')">
+  <div class="db-card" style="border-color:var(--andon-${andon})" onclick="openUnit('${u.id}')">
     <div class="db-svg-wrap">${trailerSVG(u)}</div>
     <div class="db-info">
-      <div class="db-unit-label">${u.num}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="andon-indicator ai-${andon}"></div>
+        <div class="db-unit-label">${u.num}</div>
+      </div>
       <div class="db-model-label">${modelObj.name} · ${modelObj.sub || ''}</div>
       <div class="db-stage-pill ${pillCls}">${isDone ? '✓ Completo' : stage}</div>
       <div class="db-mini-stats">
@@ -1523,10 +1700,10 @@ function trailerSVG(unit) {
   const si      = unit.stageIdx;
   const isProd  = unit.type === 'prod';
 
-  // Zone → stage index (production). For repairs, interpolate linearly.
+  // Zone → stage index (production 10 stages). For repairs, interpolate linearly.
   const ZONE_STAGES = isProd
-    ? [0, 1, 2, 3, 4, 5, 6, 7]        // chasis, soportes, ejes, piso, hidraulico, cableado, pintura, inspeccion
-    : [0, 0, 1, 2, 3, 4, 4, 5];       // map repair stages across the 8 visual zones
+    ? [0, 1, 2, 3, 4, 5, 6, 8, 9, 9]  // chasis, soportes, ejes, piso, hidraulico, cableado, pintura, qa, entrega
+    : [0, 0, 1, 3, 4, 5, 6, 7];        // map repair stages across visual zones
 
   const maxIdx = stages.length - 1;
 
