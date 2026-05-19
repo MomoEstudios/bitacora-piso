@@ -208,6 +208,34 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 <!-- HIDDEN CAMERA INPUT -->
 <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handlePhoto(event)">
 
+<!-- ══════════════════ LIGHTBOX CON ANOTACIONES ══════════════════ -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;z-index:1000;background:#000;flex-direction:column">
+  <!-- TOP BAR -->
+  <div style="display:flex;align-items:center;gap:8px;padding:52px 12px 10px;background:rgba(0,0,0,.7);flex-shrink:0">
+    <button onclick="closeLightbox()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer">✕</button>
+    <span id="lb-title" style="color:#fff;font-size:13px;flex:1;font-weight:600"></span>
+    <button id="lb-pen-btn" onclick="setTool('pen')" style="background:rgba(232,184,0,.3);border:1px solid var(--gold);color:var(--gold);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer">🖊 Pluma</button>
+    <button id="lb-erase-btn" onclick="setTool('erase')" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer">⌫ Borrar</button>
+    <button onclick="saveLightboxAnnotation()" style="background:var(--gold);border:none;color:#000;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer">Guardar</button>
+    <button onclick="downloadAnnotated()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer">⬇</button>
+  </div>
+  <!-- COLOR PICKER -->
+  <div style="display:flex;gap:8px;padding:8px 16px;background:rgba(0,0,0,.5);flex-shrink:0">
+    <span style="color:#aaa;font-size:11px;align-self:center">Color:</span>
+    <div onclick="setColor('#ff3b30')" style="width:24px;height:24px;border-radius:50%;background:#ff3b30;cursor:pointer;border:2px solid transparent" class="clr-opt"></div>
+    <div onclick="setColor('#ffd60a')" style="width:24px;height:24px;border-radius:50%;background:#ffd60a;cursor:pointer;border:2px solid transparent" class="clr-opt"></div>
+    <div onclick="setColor('#30d158')" style="width:24px;height:24px;border-radius:50%;background:#30d158;cursor:pointer;border:2px solid transparent" class="clr-opt"></div>
+    <div onclick="setColor('#0a84ff')" style="width:24px;height:24px;border-radius:50%;background:#0a84ff;cursor:pointer;border:2px solid transparent" class="clr-opt"></div>
+    <div onclick="setColor('#ffffff')" style="width:24px;height:24px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid transparent" class="clr-opt"></div>
+    <span style="color:#aaa;font-size:11px;align-self:center;margin-left:8px">Grosor:</span>
+    <input type="range" id="lb-size" min="2" max="20" value="4" style="width:80px;accent-color:var(--gold)">
+  </div>
+  <!-- CANVAS -->
+  <div style="flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center">
+    <canvas id="lb-canvas" style="max-width:100%;max-height:100%;touch-action:none"></canvas>
+  </div>
+</div>
+
 <!-- ══════════════════ MODAL: NOTA ══════════════════ -->
 <div class="modal-overlay" id="modal-note" onclick="closeModal('modal-note')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -781,10 +809,13 @@ function entryHtml(e) {
   const stageTag = e.stage ? `<span class="fe-stage-tag">${e.stage}</span>` : '';
 
   if (e.type === 'photo') {
+    const hasAnnotation = e.annotation ? true : false;
+    const annBadge = hasAnnotation ? `<span style="background:rgba(192,57,43,.2);color:#e06b5f;border:1px solid rgba(192,57,43,.3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px">🖊 Anotado</span>` : '';
+    const imgSrc = e.annotation || e.dataUrl;
     return `<div class="feed-entry type-photo">
-      <img class="fe-img" src="${e.dataUrl}" alt="foto">
+      <img class="fe-img" src="${imgSrc}" alt="foto" onclick="openLightbox('${e.id}')" style="cursor:pointer;max-height:280px;object-fit:contain;background:#000;width:100%">
       <div class="fe-body">
-        <div class="fe-meta"><span class="fe-type-icon">📷</span>${timeTag}${stageTag}</div>
+        <div class="fe-meta"><span class="fe-type-icon">📷</span>${timeTag}${stageTag}${annBadge}</div>
         ${e.caption ? `<div class="fe-text">${e.caption}</div>` : ''}
       </div>
     </div>`;
@@ -1068,6 +1099,114 @@ function handlePhoto(evt) {
     showToast('Foto guardada en la nube');
   });
   evt.target.value = '';
+}
+
+// ── LIGHTBOX + ANOTACIONES ────────────────────────────────────────────────────
+
+let lbEntryId = null;
+let lbCanvas = null;
+let lbCtx = null;
+let lbDrawing = false;
+let lbTool = 'pen';
+let lbColor = '#ff3b30';
+let lbImg = null;
+
+function openLightbox(entryId) {
+  const u = getUnit(activeUnitId);
+  const entry = u.entries.find(e => e.id === entryId);
+  if (!entry) return;
+  lbEntryId = entryId;
+  lbTool = 'pen';
+  lbColor = '#ff3b30';
+
+  const lb = document.getElementById('lightbox');
+  lb.style.display = 'flex';
+  document.getElementById('lb-title').textContent = `📷 ${entry.stage || ''} · ${fmtTime(entry.ts)}`;
+
+  lbCanvas = document.getElementById('lb-canvas');
+  lbCtx = lbCanvas.getContext('2d');
+
+  lbImg = new Image();
+  lbImg.crossOrigin = 'anonymous';
+  lbImg.onload = () => {
+    const maxW = window.innerWidth;
+    const maxH = window.innerHeight - 160;
+    const ratio = Math.min(maxW / lbImg.width, maxH / lbImg.height);
+    lbCanvas.width = lbImg.width * ratio;
+    lbCanvas.height = lbImg.height * ratio;
+    lbCtx.drawImage(lbImg, 0, 0, lbCanvas.width, lbCanvas.height);
+    // restore annotation if exists
+    if (entry.annotation) {
+      const ann = new Image();
+      ann.onload = () => lbCtx.drawImage(ann, 0, 0, lbCanvas.width, lbCanvas.height);
+      ann.src = entry.annotation;
+    }
+  };
+  lbImg.src = entry.dataUrl;
+
+  // touch events
+  lbCanvas.ontouchstart = (e) => { e.preventDefault(); lbDrawing = true; lbDraw(e.touches[0], true); };
+  lbCanvas.ontouchmove  = (e) => { e.preventDefault(); if (lbDrawing) lbDraw(e.touches[0], false); };
+  lbCanvas.ontouchend   = () => { lbDrawing = false; lbCtx.beginPath(); };
+  lbCanvas.onmousedown  = (e) => { lbDrawing = true; lbDraw(e, true); };
+  lbCanvas.onmousemove  = (e) => { if (lbDrawing) lbDraw(e, false); };
+  lbCanvas.onmouseup    = () => { lbDrawing = false; lbCtx.beginPath(); };
+}
+
+function lbDraw(e, start) {
+  const rect = lbCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (lbCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (lbCanvas.height / rect.height);
+  const size = parseInt(document.getElementById('lb-size').value);
+  if (lbTool === 'erase') {
+    lbCtx.globalCompositeOperation = 'destination-out';
+    lbCtx.lineWidth = size * 4;
+  } else {
+    lbCtx.globalCompositeOperation = 'source-over';
+    lbCtx.strokeStyle = lbColor;
+    lbCtx.lineWidth = size;
+    lbCtx.lineCap = 'round';
+    lbCtx.lineJoin = 'round';
+  }
+  if (start) { lbCtx.beginPath(); lbCtx.moveTo(x, y); }
+  else { lbCtx.lineTo(x, y); lbCtx.stroke(); }
+}
+
+function setTool(t) {
+  lbTool = t;
+  document.getElementById('lb-pen-btn').style.background = t === 'pen' ? 'rgba(232,184,0,.3)' : 'rgba(255,255,255,.1)';
+  document.getElementById('lb-erase-btn').style.background = t === 'erase' ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.1)';
+}
+
+function setColor(c) {
+  lbColor = c; lbTool = 'pen';
+  setTool('pen');
+  document.querySelectorAll('.clr-opt').forEach(el => el.style.border = '2px solid transparent');
+  event.target.style.border = '2px solid white';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  lbEntryId = null;
+}
+
+function saveLightboxAnnotation() {
+  if (!lbEntryId) return;
+  const u = getUnit(activeUnitId);
+  const entry = u.entries.find(e => e.id === lbEntryId);
+  if (!entry) return;
+  entry.annotation = lbCanvas.toDataURL('image/jpeg', 0.8);
+  saveLocal();
+  renderUnitFeed();
+  closeLightbox();
+  showToast('Anotación guardada');
+}
+
+function downloadAnnotated() {
+  const a = document.createElement('a');
+  a.href = lbCanvas.toDataURL('image/jpeg', 0.9);
+  a.download = `foto-anotada-${new Date().toISOString().slice(0,10)}.jpg`;
+  a.click();
 }
 
 async function manualSync() {
