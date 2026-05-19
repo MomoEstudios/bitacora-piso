@@ -419,14 +419,24 @@ async function syncToSupabase() {
   if (!supaOnline) return;
   try {
     for (const u of units) {
+      // check if already exists
+      const { data: existing } = await db.from('units').select('id').eq('local_id', u.id).maybeSingle();
       const row = {
-        id: u.id, type: u.type, model: u.model, num: u.num,
+        local_id: u.id, type: u.type, model: u.model, num: u.num,
         stage_idx: u.stageIdx,
         rep_reason: u.repReason || null,
         rep_deadline: u.repDeadline || null,
       };
-      await db.from('units').upsert(row);
+      let supaUnitId;
+      if (existing) {
+        await db.from('units').update(row).eq('local_id', u.id);
+        supaUnitId = existing.id;
+      } else {
+        const { data: inserted } = await db.from('units').insert(row).select('id').single();
+        supaUnitId = inserted?.id;
+      }
       for (const e of u.entries) {
+        const { data: existingE } = await db.from('entries').select('id').eq('local_id', e.id).maybeSingle();
         let photoUrl = e.dataUrl || null;
         if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
           const blob = await (await fetch(e.dataUrl)).blob();
@@ -439,13 +449,17 @@ async function syncToSupabase() {
           }
         }
         const erow = {
-          id: e.id, unit_id: u.id, type: e.type,
+          local_id: e.id, unit_id: supaUnitId, type: e.type,
           text: e.text || null, stage: e.stage || null,
           mat_id: e.matId || null, mat_name: e.matName || null,
           status: e.status || null, note: e.note || null,
           photo_url: photoUrl,
         };
-        await db.from('entries').upsert(erow);
+        if (existingE) {
+          await db.from('entries').update(erow).eq('local_id', e.id);
+        } else {
+          await db.from('entries').insert(erow);
+        }
       }
     }
     setConnStatus(true, '☁ Sincronizado');
@@ -471,14 +485,16 @@ async function loadFromDB() {
       const { data: dbEntries } = await db.from('entries').select('*').order('created_at', {ascending:true});
       if (dbUnits && dbUnits.length > 0) {
         units = dbUnits.map(u => ({
-          id: u.id, type: u.type, model: u.model, num: u.num,
+          id: u.local_id || String(u.id),
+          type: u.type, model: u.model, num: u.num,
           stageIdx: u.stage_idx || 0,
           repReason: u.rep_reason, repDeadline: u.rep_deadline,
           createdAt: new Date(u.created_at).getTime(),
           entries: (dbEntries || [])
             .filter(e => e.unit_id === u.id)
             .map(e => ({
-              id: e.id, type: e.type, text: e.text, stage: e.stage,
+              id: e.local_id || String(e.id),
+              type: e.type, text: e.text, stage: e.stage,
               matId: e.mat_id, matName: e.mat_name, status: e.status,
               note: e.note, dataUrl: e.photo_url,
               ts: new Date(e.created_at).getTime()
@@ -501,24 +517,31 @@ async function loadFromDB() {
 
 async function saveUnit(u) {
   saveLocal();
-  if (supaOnline) {
+  if (!supaOnline) return;
+  try {
+    const { data: existing } = await db.from('units').select('id').eq('local_id', u.id).maybeSingle();
     const row = {
-      id: u.id, type: u.type, model: u.model, num: u.num,
+      local_id: u.id, type: u.type, model: u.model, num: u.num,
       stage_idx: u.stageIdx,
       rep_reason: u.repReason || null,
       rep_deadline: u.repDeadline || null,
     };
-    const { error } = await db.from('units').upsert(row);
-    if (error) { supaOnline = false; setConnStatus(false, '📱 Solo local'); }
-  }
+    if (existing) {
+      await db.from('units').update(row).eq('local_id', u.id);
+    } else {
+      await db.from('units').insert(row);
+    }
+  } catch(err) { console.error('saveUnit:', err); }
 }
 
 async function saveEntry(unitId, e) {
   saveLocal();
   if (!supaOnline) return;
-  let photoUrl = e.dataUrl || null;
-  if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
-    try {
+  try {
+    const { data: supaUnit } = await db.from('units').select('id').eq('local_id', unitId).maybeSingle();
+    if (!supaUnit) return;
+    let photoUrl = e.dataUrl || null;
+    if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
       const blob = await (await fetch(e.dataUrl)).blob();
       const ext = blob.type.includes('png') ? 'png' : 'jpg';
       const path = `${unitId}/${e.id}.${ext}`;
@@ -527,24 +550,29 @@ async function saveEntry(unitId, e) {
         const { data } = db.storage.from('photos').getPublicUrl(path);
         photoUrl = data.publicUrl;
       }
-    } catch(err) { console.error('Photo upload:', err); }
-  }
-  const row = {
-    id: e.id, unit_id: unitId, type: e.type,
-    text: e.text || null, stage: e.stage || null,
-    mat_id: e.matId || null, mat_name: e.matName || null,
-    status: e.status || null, note: e.note || null,
-    photo_url: photoUrl,
-  };
-  const { error } = await db.from('entries').upsert(row);
-  if (error) { supaOnline = false; setConnStatus(false, '📱 Solo local'); }
+    }
+    const { data: existingE } = await db.from('entries').select('id').eq('local_id', e.id).maybeSingle();
+    const erow = {
+      local_id: e.id, unit_id: supaUnit.id, type: e.type,
+      text: e.text || null, stage: e.stage || null,
+      mat_id: e.matId || null, mat_name: e.matName || null,
+      status: e.status || null, note: e.note || null,
+      photo_url: photoUrl,
+    };
+    if (existingE) {
+      await db.from('entries').update(erow).eq('local_id', e.id);
+    } else {
+      await db.from('entries').insert(erow);
+    }
+  } catch(err) { console.error('saveEntry:', err); }
 }
 
 async function updateEntryStatus(entryId, status, note) {
   saveLocal();
   if (!supaOnline) return;
-  const { error } = await db.from('entries').update({status, note: note||null}).eq('id', entryId);
-  if (error) { supaOnline = false; }
+  try {
+    await db.from('entries').update({status, note: note||null}).eq('local_id', entryId);
+  } catch(err) { console.error('updateEntry:', err); }
 }
 
 // ── UI HELPERS ────────────────────────────────────────────────────────────────
