@@ -515,21 +515,32 @@ async function loadFromDB() {
   showLoading(false);
 }
 
+// cache de supa_id por local_id para no hacer lookup cada vez
+const supaIdCache = {};
+
+async function getSupaUnitId(localId) {
+  if (supaIdCache[localId]) return supaIdCache[localId];
+  const { data } = await db.from('units').select('id').eq('local_id', localId).maybeSingle();
+  if (data) supaIdCache[localId] = data.id;
+  return data?.id || null;
+}
+
 async function saveUnit(u) {
   saveLocal();
   if (!supaOnline) return;
   try {
-    const { data: existing } = await db.from('units').select('id').eq('local_id', u.id).maybeSingle();
     const row = {
       local_id: u.id, type: u.type, model: u.model, num: u.num,
       stage_idx: u.stageIdx,
       rep_reason: u.repReason || null,
       rep_deadline: u.repDeadline || null,
     };
+    const existing = await getSupaUnitId(u.id);
     if (existing) {
       await db.from('units').update(row).eq('local_id', u.id);
     } else {
-      await db.from('units').insert(row);
+      const { data } = await db.from('units').insert(row).select('id').single();
+      if (data) supaIdCache[u.id] = data.id;
     }
   } catch(err) { console.error('saveUnit:', err); }
 }
@@ -538,22 +549,30 @@ async function saveEntry(unitId, e) {
   saveLocal();
   if (!supaOnline) return;
   try {
-    const { data: supaUnit } = await db.from('units').select('id').eq('local_id', unitId).maybeSingle();
-    if (!supaUnit) return;
-    let photoUrl = e.dataUrl || null;
+    // asegura que la unidad existe en Supabase primero
+    const u = getUnit(unitId);
+    if (u) await saveUnit(u);
+
+    const supaUnitId = await getSupaUnitId(unitId);
+    if (!supaUnitId) { console.error('No supaUnitId para', unitId); return; }
+
+    let photoUrl = (e.dataUrl && !e.dataUrl.startsWith('data:')) ? e.dataUrl : null;
     if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
-      const blob = await (await fetch(e.dataUrl)).blob();
-      const ext = blob.type.includes('png') ? 'png' : 'jpg';
-      const path = `${unitId}/${e.id}.${ext}`;
-      const { error: upErr } = await db.storage.from('photos').upload(path, blob, {contentType: blob.type, upsert: true});
-      if (!upErr) {
-        const { data } = db.storage.from('photos').getPublicUrl(path);
-        photoUrl = data.publicUrl;
-      }
+      try {
+        const blob = await (await fetch(e.dataUrl)).blob();
+        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+        const path = `${unitId}/${e.id}.${ext}`;
+        const { error: upErr } = await db.storage.from('photos').upload(path, blob, {contentType: blob.type, upsert: true});
+        if (!upErr) {
+          const { data } = db.storage.from('photos').getPublicUrl(path);
+          photoUrl = data.publicUrl;
+        }
+      } catch(pe) { console.error('Photo upload:', pe); }
     }
+
     const { data: existingE } = await db.from('entries').select('id').eq('local_id', e.id).maybeSingle();
     const erow = {
-      local_id: e.id, unit_id: supaUnit.id, type: e.type,
+      local_id: e.id, unit_id: supaUnitId, type: e.type,
       text: e.text || null, stage: e.stage || null,
       mat_id: e.matId || null, mat_name: e.matName || null,
       status: e.status || null, note: e.note || null,
@@ -564,6 +583,7 @@ async function saveEntry(unitId, e) {
     } else {
       await db.from('entries').insert(erow);
     }
+    setConnStatus(true, '☁ Sincronizado');
   } catch(err) { console.error('saveEntry:', err); }
 }
 
