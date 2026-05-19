@@ -185,6 +185,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <h1 id="unit-title">Unidad</h1>
       <div class="sub" id="unit-sub"></div>
     </div>
+    <div onclick="openDeleteUnit()" style="width:36px;height:36px;border-radius:50%;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Eliminar unidad">🗑</div>
   </div>
   <div class="scroll-body" id="unit-feed">
     <!-- generated -->
@@ -334,6 +335,67 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <textarea class="modal-input" id="matupdate-note" rows="2" placeholder="Nota de actualización (opcional)..."></textarea>
     <button class="modal-btn primary" onclick="saveMatUpdate()">Actualizar</button>
     <button class="modal-btn cancel" onclick="closeModal('modal-matupdate')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: ELIMINAR UNIDAD ══════════════════ -->
+<div class="modal-overlay" id="modal-delete" onclick="closeModal('modal-delete')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2 style="color:#e06b5f">🗑 Eliminar Unidad</h2>
+    <div id="delete-step-1">
+      <p style="font-size:14px;color:var(--text2);margin:12px 0 20px;line-height:1.6">Esta acción eliminará la unidad y todas sus entradas (fotos, notas, materiales). <strong style="color:var(--text)">No se puede deshacer.</strong></p>
+      <button class="modal-btn" onclick="deleteStep2()" style="background:rgba(192,57,43,.15);color:#e06b5f;border:1px solid rgba(192,57,43,.3)">Sí, quiero eliminarla</button>
+      <button class="modal-btn cancel" onclick="closeModal('modal-delete')">Cancelar</button>
+    </div>
+    <div id="delete-step-2" style="display:none">
+      <p style="font-size:14px;color:#e06b5f;margin:12px 0 6px;font-weight:700">⚠ Confirmación final</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Escribe el número de la unidad para confirmar:</p>
+      <input class="modal-input" id="delete-confirm-input" placeholder="Ej: #007" style="display:block;margin-bottom:4px">
+      <p id="delete-error" style="font-size:11px;color:#e06b5f;height:16px;margin-bottom:8px"></p>
+      <button class="modal-btn" onclick="confirmDeleteUnit()" style="background:#b52200;color:white;border:none">Eliminar definitivamente</button>
+      <button class="modal-btn cancel" onclick="closeModal('modal-delete')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: RETROCESO DE ETAPA ══════════════════ -->
+<div class="modal-overlay" id="modal-rollback" onclick="closeModal('modal-rollback')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2 style="color:#e06b5f">↩ Retroceso de Etapa</h2>
+    <div style="background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px">
+      <div style="color:var(--text2)">Regresando de:</div>
+      <div id="rb-from" style="font-weight:700;color:var(--text);margin:2px 0 8px"></div>
+      <div style="color:var(--text2)">A:</div>
+      <div id="rb-to" style="font-weight:700;color:#e06b5f;margin-top:2px"></div>
+    </div>
+    <div class="form-group">
+      <label>Tipo de retroceso</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0">
+        <div class="type-opt selected" id="rbt-error" onclick="selectRbType('error')"><span class="to-name" style="font-size:12px">⚙️ Error de proceso</span></div>
+        <div class="type-opt" id="rbt-material" onclick="selectRbType('material')"><span class="to-name" style="font-size:12px">📦 Material defectuoso</span></div>
+        <div class="type-opt" id="rbt-design" onclick="selectRbType('design')"><span class="to-name" style="font-size:12px">📐 Cambio de diseño</span></div>
+        <div class="type-opt" id="rbt-other" onclick="selectRbType('other')"><span class="to-name" style="font-size:12px">📋 Otro</span></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Motivo detallado</label>
+      <textarea class="modal-input" id="rb-reason" rows="3" placeholder="Describe qué ocurrió..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>¿Fue autorizado?</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="type-opt selected" id="rba-yes" onclick="selectRbAuth('yes')"><span class="to-name" style="font-size:12px">✅ Sí — autorizado</span></div>
+        <div class="type-opt" id="rba-no" onclick="selectRbAuth('no')"><span class="to-name" style="font-size:12px">⚠️ No — pendiente</span></div>
+      </div>
+    </div>
+    <div class="form-group" id="rb-auth-by-group">
+      <label>Autorizado por</label>
+      <input class="modal-input" id="rb-auth-by" placeholder="Nombre de quien autorizó..." style="display:block">
+    </div>
+    <button class="modal-btn" onclick="confirmRollback()" style="background:rgba(192,57,43,.2);color:#e06b5f;border:1px solid rgba(192,57,43,.4)">Confirmar retroceso</button>
+    <button class="modal-btn cancel" onclick="closeModal('modal-rollback')">Cancelar</button>
   </div>
 </div>
 
@@ -511,30 +573,28 @@ async function loadFromDB() {
     try {
       const { data: dbUnits } = await db.from('units').select('*').order('created_at', {ascending:true});
       const { data: dbEntries } = await db.from('entries').select('*').order('created_at', {ascending:true});
-      if (dbUnits && dbUnits.length > 0) {
-        units = dbUnits.map(u => ({
-          id: u.local_id || String(u.id),
-          type: u.type, model: u.model, num: u.num,
-          stageIdx: u.stage_idx || 0,
-          repReason: u.rep_reason, repDeadline: u.rep_deadline,
-          createdAt: new Date(u.created_at).getTime(),
-          entries: (dbEntries || [])
-            .filter(e => e.unit_id === u.id)
-            .map(e => ({
-              id: e.local_id || String(e.id),
-              type: e.type, text: e.text, stage: e.stage,
-              matId: e.mat_id, matName: e.mat_name, status: e.status,
-              note: e.note, dataUrl: e.photo_url,
-              ts: new Date(e.created_at).getTime()
-            }))
-        }));
-        saveLocal();
-        renderHome();
-        setConnStatus(true, '☁ Sincronizado');
-      } else {
-        // Supabase vacío — sube datos locales
-        await syncToSupabase();
-      }
+      // Supabase siempre manda — reemplaza localStorage completo
+      units = (dbUnits || []).map(u => ({
+        id: u.local_id || String(u.id),
+        type: u.type, model: u.model, num: u.num,
+        stageIdx: u.stage_idx || 0,
+        repReason: u.rep_reason, repDeadline: u.rep_deadline,
+        createdAt: new Date(u.created_at).getTime(),
+        entries: (dbEntries || [])
+          .filter(e => e.unit_id === u.id)
+          .map(e => ({
+            id: e.local_id || String(e.id),
+            type: e.type, text: e.text, stage: e.stage,
+            rbFrom: e.rb_from, rbTo: e.rb_to,
+            rbType: e.rb_type, rbAuth: e.rb_auth,
+            matId: e.mat_id, matName: e.mat_name, status: e.status,
+            note: e.note, dataUrl: e.photo_url,
+            ts: new Date(e.created_at).getTime()
+          }))
+      }));
+      saveLocal();
+      renderHome();
+      setConnStatus(true, '☁ Sincronizado');
     } catch(err) {
       console.error(err);
       setConnStatus(false, '📱 Solo local');
@@ -854,6 +914,18 @@ function entryHtml(e) {
       </div>
     </div>`;
   }
+
+  if (e.type === 'rollback') {
+    return `<div class="feed-entry" style="border-left:3px solid #e06b5f">
+      <div class="fe-body">
+        <div class="fe-meta"><span class="fe-type-icon">↩</span>${timeTag}</div>
+        <div style="font-size:12px;font-weight:700;color:#e06b5f;margin-bottom:4px">RETROCESO: ${e.rbFrom} → ${e.rbTo}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:2px">Tipo: ${e.rbType}</div>
+        <div class="fe-text">${e.text}</div>
+        <div style="font-size:11px;margin-top:4px;padding:4px 8px;border-radius:6px;display:inline-block;background:${e.rbAuth.includes('Autorizado') ? 'rgba(39,174,96,.15)' : 'rgba(230,126,34,.15)'};color:${e.rbAuth.includes('Autorizado') ? '#4ec87a' : '#e67e22'}">${e.rbAuth}</div>
+      </div>
+    </div>`;
+  }
   return '';
 }
 
@@ -961,7 +1033,13 @@ function openStageModal() {
 async function setStage(idx) {
   const u = getUnit(activeUnitId);
   const stages = getStages(u);
-  if (idx <= u.stageIdx) { closeModal('modal-stage'); return; }
+  if (idx === u.stageIdx) { closeModal('modal-stage'); return; }
+  if (idx < u.stageIdx) {
+    // retroceso
+    closeModal('modal-stage');
+    openRollbackModal(idx);
+    return;
+  }
   const prev = stages[u.stageIdx];
   const next = stages[idx];
   u.stageIdx = idx;
@@ -1207,6 +1285,115 @@ function downloadAnnotated() {
   a.href = lbCanvas.toDataURL('image/jpeg', 0.9);
   a.download = `foto-anotada-${new Date().toISOString().slice(0,10)}.jpg`;
   a.click();
+}
+
+// ── ELIMINAR UNIDAD ───────────────────────────────────────────────────────────
+
+function openDeleteUnit() {
+  document.getElementById('delete-step-1').style.display = 'block';
+  document.getElementById('delete-step-2').style.display = 'none';
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('delete-error').textContent = '';
+  openModal('modal-delete');
+}
+
+function deleteStep2() {
+  document.getElementById('delete-step-1').style.display = 'none';
+  document.getElementById('delete-step-2').style.display = 'block';
+  setTimeout(() => document.getElementById('delete-confirm-input').focus(), 300);
+}
+
+async function confirmDeleteUnit() {
+  const u = getUnit(activeUnitId);
+  const input = document.getElementById('delete-confirm-input').value.trim();
+  if (input !== u.num) {
+    document.getElementById('delete-error').textContent = `Escribe exactamente: ${u.num}`;
+    return;
+  }
+  // borrar local
+  units = units.filter(x => x.id !== activeUnitId);
+  saveLocal();
+  // borrar en Supabase
+  if (supaOnline) {
+    try {
+      const supaId = await getSupaUnitId(u.id);
+      if (supaId) {
+        await db.from('entries').delete().eq('unit_id', supaId);
+        await db.from('units').delete().eq('local_id', u.id);
+      }
+    } catch(err) { console.error('delete:', err); }
+  }
+  closeModal('modal-delete');
+  goHome();
+  showToast('Unidad eliminada');
+}
+
+// ── RETROCESO DE ETAPA ────────────────────────────────────────────────────────
+
+let rbTargetIdx = null;
+let rbType = 'error';
+let rbAuth = 'yes';
+
+function openRollbackModal(idx) {
+  const u = getUnit(activeUnitId);
+  const stages = getStages(u);
+  rbTargetIdx = idx;
+  rbType = 'error';
+  rbAuth = 'yes';
+  document.getElementById('rb-from').textContent = stages[u.stageIdx];
+  document.getElementById('rb-to').textContent = stages[idx];
+  document.getElementById('rb-reason').value = '';
+  document.getElementById('rb-auth-by').value = '';
+  document.getElementById('rb-auth-by-group').style.display = 'block';
+  ['error','material','design','other'].forEach(t => {
+    document.getElementById(`rbt-${t}`).classList.toggle('selected', t === 'error');
+  });
+  ['yes','no'].forEach(t => {
+    document.getElementById(`rba-${t}`).classList.toggle('selected', t === 'yes');
+  });
+  openModal('modal-rollback');
+}
+
+function selectRbType(t) {
+  rbType = t;
+  ['error','material','design','other'].forEach(x =>
+    document.getElementById(`rbt-${x}`).classList.toggle('selected', x === t));
+}
+
+function selectRbAuth(a) {
+  rbAuth = a;
+  ['yes','no'].forEach(x =>
+    document.getElementById(`rba-${x}`).classList.toggle('selected', x === a));
+  document.getElementById('rb-auth-by-group').style.display = a === 'yes' ? 'block' : 'none';
+}
+
+async function confirmRollback() {
+  const u = getUnit(activeUnitId);
+  const stages = getStages(u);
+  const reason = document.getElementById('rb-reason').value.trim();
+  const authBy = document.getElementById('rb-auth-by').value.trim();
+  if (!reason) { showToast('Escribe el motivo del retroceso'); return; }
+
+  const typeLabels = {error:'Error de proceso', material:'Material defectuoso', design:'Cambio de diseño', other:'Otro'};
+  const prevStage = stages[u.stageIdx];
+  const nextStage = stages[rbTargetIdx];
+  u.stageIdx = rbTargetIdx;
+
+  const entry = {
+    id: uid(), type: 'rollback',
+    text: reason, stage: nextStage,
+    rbFrom: prevStage, rbTo: nextStage,
+    rbType: typeLabels[rbType],
+    rbAuth: rbAuth === 'yes' ? `Autorizado por: ${authBy || 'N/E'}` : 'Sin autorización — pendiente',
+    ts: Date.now()
+  };
+  u.entries.push(entry);
+  closeModal('modal-rollback');
+  renderUnitFeed();
+  renderHome();
+  await saveUnit(u);
+  await saveEntry(u.id, entry);
+  showToast('Retroceso registrado');
 }
 
 async function manualSync() {
