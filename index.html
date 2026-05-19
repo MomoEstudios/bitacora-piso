@@ -169,7 +169,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <h1>Bitácora Piso</h1>
       <div class="sub" id="home-date"></div>
     </div>
-    <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000">A</div>
+    <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Sincronizar">⟳</div>
+  <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000">A</div>
   </div>
   <div class="scroll-body" id="home-list">
     <!-- generated -->
@@ -387,67 +388,147 @@ let selectedType = 'prod';
 let updatingEntryId = null;
 let updateStatus = 'pending';
 
-// ── SUPABASE CRUD ─────────────────────────────────────────────────────────────
+// ── LOCAL STORAGE (primario) ──────────────────────────────────────────────────
+
+function saveLocal() {
+  localStorage.setItem('bp_units', JSON.stringify(units));
+}
+
+function loadLocal() {
+  const d = localStorage.getItem('bp_units');
+  if (d) { units = JSON.parse(d); return true; }
+  return false;
+}
+
+// ── SUPABASE SYNC (secundario, en background) ─────────────────────────────────
+
+let supaOnline = false;
+
+async function pingSupabase() {
+  try {
+    const { error } = await Promise.race([
+      db.from('units').select('id').limit(1),
+      new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 5000))
+    ]);
+    supaOnline = !error;
+  } catch { supaOnline = false; }
+  setConnStatus(supaOnline, supaOnline ? '☁ Nube activa' : '📱 Solo local');
+}
+
+async function syncToSupabase() {
+  if (!supaOnline) return;
+  try {
+    for (const u of units) {
+      const row = {
+        id: u.id, type: u.type, model: u.model, num: u.num,
+        stage_idx: u.stageIdx,
+        rep_reason: u.repReason || null,
+        rep_deadline: u.repDeadline || null,
+      };
+      await db.from('units').upsert(row);
+      for (const e of u.entries) {
+        let photoUrl = e.dataUrl || null;
+        if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
+          const blob = await (await fetch(e.dataUrl)).blob();
+          const ext = blob.type.includes('png') ? 'png' : 'jpg';
+          const path = `${u.id}/${e.id}.${ext}`;
+          const { error: upErr } = await db.storage.from('photos').upload(path, blob, {contentType: blob.type, upsert: true});
+          if (!upErr) {
+            const { data } = db.storage.from('photos').getPublicUrl(path);
+            photoUrl = data.publicUrl;
+          }
+        }
+        const erow = {
+          id: e.id, unit_id: u.id, type: e.type,
+          text: e.text || null, stage: e.stage || null,
+          mat_id: e.matId || null, mat_name: e.matName || null,
+          status: e.status || null, note: e.note || null,
+          photo_url: photoUrl,
+        };
+        await db.from('entries').upsert(erow);
+      }
+    }
+    setConnStatus(true, '☁ Sincronizado');
+  } catch(err) {
+    console.error('Sync error:', err);
+    setConnStatus(false, '📱 Solo local');
+  }
+}
 
 async function loadFromDB() {
   showLoading(true);
-  setConnStatus(null, '⟳ Conectando...');
-  try {
-    const { data: dbUnits, error: uErr } = await db.from('units').select('*').order('created_at', {ascending:true});
-    if (uErr) throw uErr;
-    const { data: dbEntries, error: eErr } = await db.from('entries').select('*').order('created_at', {ascending:true});
-    if (eErr) throw eErr;
+  setConnStatus(null, '⟳ Cargando...');
 
-    units = (dbUnits || []).map(u => ({
-      id: u.id, type: u.type, model: u.model, num: u.num,
-      stageIdx: u.stage_idx || 0,
-      repReason: u.rep_reason, repDeadline: u.rep_deadline,
-      createdAt: new Date(u.created_at).getTime(),
-      entries: (dbEntries || [])
-        .filter(e => e.unit_id === u.id)
-        .map(e => ({
-          id: e.id, type: e.type, text: e.text, stage: e.stage,
-          matId: e.mat_id, matName: e.mat_name, status: e.status,
-          note: e.note, dataUrl: e.photo_url,
-          ts: new Date(e.created_at).getTime()
-        }))
-    }));
-    setConnStatus(true, '● Conectado');
-  } catch(err) {
-    console.error('Error cargando datos:', err);
-    setConnStatus(false, '● Sin conexión: ' + (err.message || err));
-    showToast('Error: ' + (err.message || 'Sin conexión'));
+  // Carga local inmediata
+  loadLocal();
+  renderHome();
+
+  // Intenta Supabase en background
+  await pingSupabase();
+  if (supaOnline) {
+    try {
+      const { data: dbUnits } = await db.from('units').select('*').order('created_at', {ascending:true});
+      const { data: dbEntries } = await db.from('entries').select('*').order('created_at', {ascending:true});
+      if (dbUnits && dbUnits.length > 0) {
+        units = dbUnits.map(u => ({
+          id: u.id, type: u.type, model: u.model, num: u.num,
+          stageIdx: u.stage_idx || 0,
+          repReason: u.rep_reason, repDeadline: u.rep_deadline,
+          createdAt: new Date(u.created_at).getTime(),
+          entries: (dbEntries || [])
+            .filter(e => e.unit_id === u.id)
+            .map(e => ({
+              id: e.id, type: e.type, text: e.text, stage: e.stage,
+              matId: e.mat_id, matName: e.mat_name, status: e.status,
+              note: e.note, dataUrl: e.photo_url,
+              ts: new Date(e.created_at).getTime()
+            }))
+        }));
+        saveLocal();
+        renderHome();
+        setConnStatus(true, '☁ Sincronizado');
+      } else {
+        // Supabase vacío — sube datos locales
+        await syncToSupabase();
+      }
+    } catch(err) {
+      console.error(err);
+      setConnStatus(false, '📱 Solo local');
+    }
   }
   showLoading(false);
-  renderHome();
 }
 
 async function saveUnit(u) {
-  const row = {
-    id: u.id, type: u.type, model: u.model, num: u.num,
-    stage_idx: u.stageIdx,
-    rep_reason: u.repReason || null,
-    rep_deadline: u.repDeadline || null,
-  };
-  const { error } = await db.from('units').upsert(row);
-  if (error) { console.error(error); showToast('Error guardando unidad'); }
+  saveLocal();
+  if (supaOnline) {
+    const row = {
+      id: u.id, type: u.type, model: u.model, num: u.num,
+      stage_idx: u.stageIdx,
+      rep_reason: u.repReason || null,
+      rep_deadline: u.repDeadline || null,
+    };
+    const { error } = await db.from('units').upsert(row);
+    if (error) { supaOnline = false; setConnStatus(false, '📱 Solo local'); }
+  }
 }
 
 async function saveEntry(unitId, e) {
+  saveLocal();
+  if (!supaOnline) return;
   let photoUrl = e.dataUrl || null;
-
-  // upload photo to Supabase Storage if it's a base64
   if (e.type === 'photo' && e.dataUrl && e.dataUrl.startsWith('data:')) {
-    const blob = await (await fetch(e.dataUrl)).blob();
-    const ext = blob.type.includes('png') ? 'png' : 'jpg';
-    const path = `${unitId}/${e.id}.${ext}`;
-    const { error: upErr } = await db.storage.from('photos').upload(path, blob, {contentType: blob.type});
-    if (!upErr) {
-      const { data } = db.storage.from('photos').getPublicUrl(path);
-      photoUrl = data.publicUrl;
-    }
+    try {
+      const blob = await (await fetch(e.dataUrl)).blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      const path = `${unitId}/${e.id}.${ext}`;
+      const { error: upErr } = await db.storage.from('photos').upload(path, blob, {contentType: blob.type, upsert: true});
+      if (!upErr) {
+        const { data } = db.storage.from('photos').getPublicUrl(path);
+        photoUrl = data.publicUrl;
+      }
+    } catch(err) { console.error('Photo upload:', err); }
   }
-
   const row = {
     id: e.id, unit_id: unitId, type: e.type,
     text: e.text || null, stage: e.stage || null,
@@ -456,12 +537,14 @@ async function saveEntry(unitId, e) {
     photo_url: photoUrl,
   };
   const { error } = await db.from('entries').upsert(row);
-  if (error) { console.error(error); showToast('Error guardando entrada'); }
+  if (error) { supaOnline = false; setConnStatus(false, '📱 Solo local'); }
 }
 
 async function updateEntryStatus(entryId, status, note) {
+  saveLocal();
+  if (!supaOnline) return;
   const { error } = await db.from('entries').update({status, note: note||null}).eq('id', entryId);
-  if (error) { console.error(error); showToast('Error actualizando material'); }
+  if (error) { supaOnline = false; }
 }
 
 // ── UI HELPERS ────────────────────────────────────────────────────────────────
@@ -937,6 +1020,17 @@ function handlePhoto(evt) {
     showToast('Foto guardada en la nube');
   });
   evt.target.value = '';
+}
+
+async function manualSync() {
+  showToast('Sincronizando...');
+  await pingSupabase();
+  if (supaOnline) {
+    await syncToSupabase();
+    showToast('✓ Datos sincronizados con la nube');
+  } else {
+    showToast('Sin conexión a la nube — datos guardados localmente');
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
