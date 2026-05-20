@@ -79,7 +79,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .fe-mat-info{flex:1}
 .fe-mat-name{font-size:14px;font-weight:600}
 .fe-mat-status{font-size:12px;margin-top:2px;font-weight:600}
-.status-pending{color:var(--red)}.status-transit{color:var(--orange)}.status-received{color:var(--green)}
+.status-pending{color:var(--red)}.status-requested{color:var(--gold)}.status-transit{color:var(--blue)}.status-frontier{color:var(--orange)}.status-received{color:var(--green)}
 .fe-mat-update{font-size:11px;color:var(--text2);margin-top:2px}
 .fe-mat-btn{font-size:11px;padding:5px 10px;border-radius:8px;border:none;background:var(--surface2);color:var(--text2);cursor:pointer;border:1px solid var(--border)}
 .fe-mat-btn:active{opacity:.7}
@@ -118,11 +118,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .mat-item .mat-check{font-size:18px;opacity:0}
 .mat-item.selected .mat-check{opacity:1;color:var(--gold)}
 .status-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0 14px}
+.status-opts-5{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}
+.status-opts-5 .status-opt:last-child{grid-column:1/-1}
 .status-opt{padding:12px 6px;border-radius:10px;border:2px solid var(--border);text-align:center;cursor:pointer;font-size:12px;font-weight:700}
 .status-opt:active{opacity:.8}
 .status-opt.sel-pending{border-color:var(--red);background:rgba(192,57,43,.12);color:var(--red)}
-.status-opt.sel-transit{border-color:var(--orange);background:rgba(230,126,34,.12);color:var(--orange)}
+.status-opt.sel-requested{border-color:var(--gold);background:rgba(232,184,0,.12);color:var(--gold)}
+.status-opt.sel-transit{border-color:var(--blue);background:rgba(41,128,185,.12);color:var(--blue)}
+.status-opt.sel-frontier{border-color:var(--orange);background:rgba(230,126,34,.12);color:var(--orange)}
 .status-opt.sel-received{border-color:var(--green);background:rgba(39,174,96,.12);color:var(--green)}
+/* Days badge */
+.days-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.25)}
+.days-badge.db-warn{background:rgba(192,57,43,.15);color:#e06b5f;border-color:rgba(192,57,43,.3)}
+.days-badge.db-hold{background:rgba(154,157,181,.1);color:var(--text2);border-color:var(--border)}
 
 /* STAGE SELECT */
 .stage-list .stage-item{padding:14px;border-radius:10px;background:var(--surface2);margin-bottom:6px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;gap:12px}
@@ -290,25 +298,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .emp-form .form-group{margin-bottom:10px}
 
 /* ── ANDON ── */
-:root{--andon-normal:#27ae60;--andon-warning:#e8b800;--andon-stopped:#c0392b;--andon-waiting:#2980b9}
+:root{--andon-normal:#27ae60;--andon-warning:#e8b800;--andon-stopped:#c0392b;--andon-waiting:#2980b9;--andon-hold:#9a9db5}
 .andon-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .ai-normal{background:var(--andon-normal);box-shadow:0 0 6px var(--andon-normal)}
 .ai-warning{background:var(--andon-warning);box-shadow:0 0 6px var(--andon-warning)}
 .ai-stopped{background:var(--andon-stopped);box-shadow:0 0 8px var(--andon-stopped);animation:andon-pulse 1s infinite}
 .ai-waiting{background:var(--andon-waiting);box-shadow:0 0 6px var(--andon-waiting)}
+.ai-hold{background:var(--andon-hold)}
 @keyframes andon-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .uc-andon-bar{height:4px;width:100%}
 .uca-normal{background:var(--andon-normal)}
 .uca-warning{background:var(--andon-warning)}
 .uca-stopped{background:var(--andon-stopped)}
 .uca-waiting{background:var(--andon-waiting)}
-.andon-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 14px 10px}
+.uca-hold{background:var(--andon-hold)}
+.andon-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 14px 10px}
 .aq-btn{padding:9px 4px;border-radius:10px;border:2px solid var(--border);text-align:center;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.2px;transition:border-color .15s,background .15s}
 .aq-btn:active{opacity:.8}
 .aq-btn.aq-normal.aq-sel{border-color:var(--andon-normal);background:rgba(39,174,96,.15);color:var(--andon-normal)}
 .aq-btn.aq-warning.aq-sel{border-color:var(--andon-warning);background:rgba(232,184,0,.12);color:var(--andon-warning)}
 .aq-btn.aq-stopped.aq-sel{border-color:var(--andon-stopped);background:rgba(192,57,43,.15);color:var(--andon-stopped)}
 .aq-btn.aq-waiting.aq-sel{border-color:var(--andon-waiting);background:rgba(41,128,185,.15);color:var(--andon-waiting)}
+.aq-btn.aq-hold.aq-sel{border-color:var(--andon-hold);background:rgba(154,157,181,.12);color:var(--andon-hold)}
 
 /* ── TV MODE ── */
 .tv-topbar{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
@@ -332,6 +343,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tv-card.tc-warning{border-color:var(--andon-warning)}
 .tv-card.tc-stopped{border-color:var(--andon-stopped);animation:andon-pulse 1.2s infinite}
 .tv-card.tc-waiting{border-color:var(--andon-waiting)}
+.tv-card.tc-hold{border-color:var(--andon-hold)}
 /* Split body */
 .tv-split{display:grid;grid-template-columns:48% 52%;flex:1;min-height:0}
 .tv-bp-col{padding:12px 8px 8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
@@ -591,10 +603,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     </div>
     <div class="form-group">
       <label>Estado actual</label>
-      <div class="status-opts">
-        <div class="status-opt" id="sopt-pending" onclick="selectStatus('pending')">🔴<br>Sin comprar</div>
-        <div class="status-opt" id="sopt-transit" onclick="selectStatus('transit')">🟡<br>En tránsito</div>
-        <div class="status-opt" id="sopt-received" onclick="selectStatus('received')">🟢<br>Recibido</div>
+      <div class="status-opts-5">
+        <div class="status-opt" id="sopt-pending"    onclick="selectStatus('pending')">🔴<br>Pendiente</div>
+        <div class="status-opt" id="sopt-requested"  onclick="selectStatus('requested')">🟡<br>Solicitado</div>
+        <div class="status-opt" id="sopt-transit"    onclick="selectStatus('transit')">🔵<br>En tránsito</div>
+        <div class="status-opt" id="sopt-frontier"   onclick="selectStatus('frontier')">🟠<br>En frontera</div>
+        <div class="status-opt" id="sopt-received"   onclick="selectStatus('received')">🟢<br>Recibido</div>
       </div>
     </div>
     <textarea class="modal-input" id="mat-note" rows="2" placeholder="Nota adicional (opcional)..."></textarea>
@@ -661,10 +675,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <h2 id="matupdate-title">Actualizar Material</h2>
     <div class="form-group">
       <label>Nuevo estado</label>
-      <div class="status-opts">
-        <div class="status-opt" id="uopt-pending" onclick="selectUpdateStatus('pending')">🔴<br>Sin comprar</div>
-        <div class="status-opt" id="uopt-transit" onclick="selectUpdateStatus('transit')">🟡<br>En tránsito</div>
-        <div class="status-opt" id="uopt-received" onclick="selectUpdateStatus('received')">🟢<br>Recibido</div>
+      <div class="status-opts-5">
+        <div class="status-opt" id="uopt-pending"   onclick="selectUpdateStatus('pending')">🔴<br>Pendiente</div>
+        <div class="status-opt" id="uopt-requested" onclick="selectUpdateStatus('requested')">🟡<br>Solicitado</div>
+        <div class="status-opt" id="uopt-transit"   onclick="selectUpdateStatus('transit')">🔵<br>En tránsito</div>
+        <div class="status-opt" id="uopt-frontier"  onclick="selectUpdateStatus('frontier')">🟠<br>En frontera</div>
+        <div class="status-opt" id="uopt-received"  onclick="selectUpdateStatus('received')">🟢<br>Recibido</div>
       </div>
     </div>
     <textarea class="modal-input" id="matupdate-note" rows="2" placeholder="Nota de actualización (opcional)..."></textarea>
@@ -796,6 +812,7 @@ const ANDON_LABELS = {
   warning: {icon:'🟡', txt:'Atención', cls:'warning'},
   stopped: {icon:'🔴', txt:'Parado',   cls:'stopped'},
   waiting: {icon:'🔵', txt:'Esperando',cls:'waiting'},
+  hold:    {icon:'⚪', txt:'HOLD',     cls:'hold'},
 };
 
 const MATERIALS_CATALOG = [
@@ -865,6 +882,7 @@ async function syncToSupabase() {
         workers: u.workers || null,
         rep_reason: u.repReason || null,
         rep_deadline: u.repDeadline || null,
+        stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
       };
       let supaUnitId;
       if (existing) {
@@ -933,6 +951,7 @@ async function loadFromDB() {
         workers: u.workers || null,
         repReason: u.rep_reason, repDeadline: u.rep_deadline,
         createdAt: new Date(u.created_at).getTime(),
+        stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
         entries: (dbEntries || [])
           .filter(e => e.unit_id === u.id)
           .map(e => ({
@@ -980,6 +999,7 @@ async function saveUnit(u) {
       workers: u.workers || null,
       rep_reason: u.repReason || null,
       rep_deadline: u.repDeadline || null,
+      stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
     };
     const existing = await getSupaUnitId(u.id);
     if (existing) {
@@ -1105,9 +1125,20 @@ function lastEntry(unit) {
 }
 
 function statusLabel(s) {
-  if (s === 'pending') return {txt:'Sin comprar', cls:'status-pending'};
-  if (s === 'transit') return {txt:'En tránsito', cls:'status-transit'};
-  return {txt:'Recibido ✓', cls:'status-received'};
+  if (s === 'pending')   return {txt:'Pendiente',    cls:'status-pending',   icon:'🔴'};
+  if (s === 'requested') return {txt:'Solicitado',   cls:'status-requested', icon:'🟡'};
+  if (s === 'transit')   return {txt:'En tránsito',  cls:'status-transit',   icon:'🔵'};
+  if (s === 'frontier')  return {txt:'En frontera',  cls:'status-frontier',  icon:'🟠'};
+  return {txt:'Recibido ✓', cls:'status-received', icon:'🟢'};
+}
+
+function daysInPiso(u) {
+  return Math.floor((Date.now() - u.createdAt) / 86400000);
+}
+function daysInStage(u) {
+  if (u.andonStatus === 'hold') return null; // pausado
+  const ref = u.stageStartedAt || u.createdAt;
+  return Math.floor((Date.now() - ref) / 86400000);
 }
 
 function getUnit(id) { return units.find(u => u.id === id); }
@@ -1149,6 +1180,10 @@ function unitCard(u) {
   const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model};
   const andon = u.andonStatus || 'normal';
   const andonInfo = ANDON_LABELS[andon];
+  const andonColor = `var(--andon-${andon})`;
+  const dis = daysInStage(u);
+  const dip = daysInPiso(u);
+  const stageWarn = dis !== null && dis >= 3;
   return `
   <div class="unit-card" onclick="openUnit('${u.id}')">
     <div class="uc-andon-bar uca-${andon}"></div>
@@ -1157,10 +1192,16 @@ function unitCard(u) {
       <div class="uc-info">
         <h2>${modelObj.name} ${u.num}</h2>
         <div class="uc-sub">${modelObj.sub||''} · ${stageLabel(u)}</div>
+        <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+          ${dis !== null
+            ? `<span class="days-badge ${stageWarn?'db-warn':''}" title="Días en etapa actual">${stageWarn?'⚠':'⏱'} ${dis}d etapa</span>`
+            : `<span class="days-badge db-hold" title="En HOLD">⏸ HOLD</span>`}
+          <span class="days-badge" title="Días en piso">📅 ${dip}d piso</span>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
         <span class="uc-badge ${badgeCls}">${badgeTxt}</span>
-        <span style="font-size:9px;font-weight:700;color:${andon==='normal'?'var(--andon-normal)':andon==='warning'?'var(--andon-warning)':andon==='stopped'?'var(--andon-stopped)':'var(--andon-waiting)'}">${andonInfo.icon} ${andonInfo.txt}</span>
+        <span style="font-size:9px;font-weight:700;color:${andonColor}">${andonInfo.icon} ${andonInfo.txt}</span>
       </div>
     </div>
     <div class="uc-progress">
@@ -1207,7 +1248,7 @@ function renderUnitFeed() {
     <div class="stage-dots">${dots}</div>
   </div>
   <div class="andon-quick">
-    ${['normal','warning','stopped','waiting'].map(s => {
+    ${['normal','warning','stopped','waiting','hold'].map(s => {
       const a = ANDON_LABELS[s];
       return `<div class="aq-btn aq-${s}${s===andon?' aq-sel':''}" onclick="setAndon('${s}')">${a.icon}<br>${a.txt}</div>`;
     }).join('')}
@@ -1377,7 +1418,7 @@ function selectMat(id) {
 }
 function selectStatus(s) {
   selectedStatus = s;
-  ['pending','transit','received'].forEach(x => {
+  ['pending','requested','transit','frontier','received'].forEach(x => {
     const el = document.getElementById(`sopt-${x}`);
     el.className = 'status-opt' + (x===s ? ` sel-${x}` : '');
   });
@@ -1423,6 +1464,7 @@ async function setStage(idx) {
   const prev = stages[u.stageIdx];
   const next = stages[idx];
   u.stageIdx = idx;
+  u.stageStartedAt = Date.now();
   const entry = {id:uid(), type:'stage', text:`Etapa completada: ${prev} → ${next}`, ts:Date.now()};
   u.entries.push(entry);
   closeModal('modal-stage'); renderUnitFeed(); renderHome();
@@ -1439,7 +1481,7 @@ function openMatUpdate(entryId) {
   const entry = u.entries.find(e=>e.id===entryId);
   document.getElementById('matupdate-title').textContent = `Actualizar: ${entry.matName}`;
   document.getElementById('matupdate-note').value = '';
-  ['pending','transit','received'].forEach(s => {
+  ['pending','requested','transit','frontier','received'].forEach(s => {
     document.getElementById(`uopt-${s}`).className = 'status-opt' + (s===entry.status?` sel-${s}`:'');
   });
   updateStatus = entry.status;
@@ -1447,7 +1489,7 @@ function openMatUpdate(entryId) {
 }
 function selectUpdateStatus(s) {
   updateStatus = s;
-  ['pending','transit','received'].forEach(x => {
+  ['pending','requested','transit','frontier','received'].forEach(x => {
     document.getElementById(`uopt-${x}`).className = 'status-opt' + (x===s?` sel-${x}`:'');
   });
 }
@@ -1502,7 +1544,7 @@ async function saveNewUnit() {
     id: uid(), type: selectedType, model: selectedModel, num,
     stageIdx: 0, andonStatus: 'normal',
     deliveryDate, workers,
-    createdAt: Date.now(), entries: []
+    createdAt: Date.now(), stageStartedAt: Date.now(), entries: []
   };
   if (selectedType === 'rep') {
     u.repReason = document.getElementById('rep-reason').value.trim();
@@ -2036,17 +2078,21 @@ function renderHomeMenu() {
   `;
 
   // Alert rows
-  const alertUnits = units.filter(u =>
-    u.andonStatus === 'stopped' || u.andonStatus === 'warning' ||
-    u.entries.some(e => e.type==='material' && e.status==='pending')
-  ).sort((a,b) => (a.andonStatus==='stopped'?0:1) - (b.andonStatus==='stopped'?0:1));
+  const alertUnits = units.filter(u => {
+    const dis = daysInStage(u);
+    return u.andonStatus === 'stopped' || u.andonStatus === 'warning' ||
+      u.entries.some(e => e.type==='material' && e.status==='pending') ||
+      (dis !== null && dis >= 3);
+  }).sort((a,b) => (a.andonStatus==='stopped'?0:1) - (b.andonStatus==='stopped'?0:1));
 
   if (alertUnits.length) {
     const rows = alertUnits.slice(0,5).map(u => {
       const modelObj = MODELS.find(m=>m.id===u.model)||{name:u.model};
       const isStopped = u.andonStatus === 'stopped';
       const hasMatAlert = u.entries.some(e=>e.type==='material'&&e.status==='pending');
-      const detail = isStopped ? 'Proceso parado' : hasMatAlert ? 'Material pendiente' : 'Requiere atención';
+      const dis = daysInStage(u);
+      const isDelayed = dis !== null && dis >= 3;
+      const detail = isStopped ? 'Proceso parado' : hasMatAlert ? 'Material pendiente' : isDelayed ? `${dis} días en etapa` : 'Requiere atención';
       return `<div class="alert-row ${isStopped?'ar-stopped':'ar-warning'}" onclick="openUnit('${u.id}')">
         <div class="ar-dot" style="background:var(--andon-${u.andonStatus})"></div>
         <div class="ar-info">
@@ -2494,6 +2540,11 @@ function tvCard(u) {
       <div class="tv-info-col">
         <div class="tv-unit-num">${u.num}</div>
         <div class="tv-model-lbl">${modelObj.name} · ${u.type==='rep'?'Rep.':'Prod.'} · ${modelObj.sub||''}</div>
+        <div style="display:flex;gap:6px;margin:4px 0 6px;flex-wrap:wrap">
+          ${(()=>{const dis=daysInStage(u);const dip=daysInPiso(u);const sw=dis!==null&&dis>=3;
+            return (dis!==null?`<span class="days-badge ${sw?'db-warn':''}">${sw?'⚠':'⏱'} ${dis}d etapa</span>`:`<span class="days-badge db-hold">⏸ HOLD</span>`)
+            +`<span class="days-badge">📅 ${dip}d piso</span>`;})()}
+        </div>
         <div class="tv-checklist">${checklist}</div>
       </div>
     </div>
