@@ -188,6 +188,78 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .db-empty{grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--text2)}
 .db-empty .dei{font-size:40px;margin-bottom:10px}
 
+/* ── HOME MENU ── */
+.home-hdr{padding:52px 18px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;gap:10px}
+.home-hdr h1{font-size:22px;font-weight:900;flex:1;letter-spacing:-.3px}
+.home-hdr .hdate{font-size:11px;color:var(--text2);margin-top:2px}
+.turno-bar{margin:12px 14px 0}
+.turno-start{width:100%;padding:16px;border-radius:14px;background:rgba(232,184,0,.12);border:1.5px dashed rgba(232,184,0,.4);color:var(--gold);font-size:15px;font-weight:800;cursor:pointer;text-align:center;letter-spacing:.3px}
+.turno-start:active{opacity:.8}
+.turno-active{padding:12px 14px;background:rgba(39,174,96,.08);border-radius:14px;border:1px solid rgba(39,174,96,.25);display:flex;align-items:center;gap:10px}
+.ta-pulse{width:10px;height:10px;border-radius:50%;background:var(--andon-normal);animation:andon-pulse 2s infinite;flex-shrink:0}
+.ta-info{flex:1}
+.ta-sup{font-size:13px;font-weight:800;color:var(--andon-normal)}
+.ta-time{font-size:11px;color:var(--text2);margin-top:1px}
+.ta-close{padding:7px 14px;border-radius:10px;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);color:#e06b5f;font-size:11px;font-weight:800;cursor:pointer}
+.ta-close:active{opacity:.75}
+.home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin:12px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.hstat{background:var(--surface);padding:11px 8px;text-align:center;cursor:pointer}
+.hstat:active{opacity:.8}
+.hstat .hs-num{display:block;font-size:20px;font-weight:900;line-height:1;color:var(--gold)}
+.hstat .hs-lbl{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-top:3px}
+.hstat.hs-alert .hs-num{color:#e06b5f}
+.hstat.hs-ok .hs-num{color:var(--andon-normal)}
+.home-nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 0}
+.hnav-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:18px 16px;cursor:pointer;display:flex;flex-direction:column;gap:5px;min-height:100px}
+.hnav-card:active{opacity:.8;transform:scale(.98)}
+.hnav-icon{font-size:26px;line-height:1;margin-bottom:2px}
+.hnav-label{font-size:14px;font-weight:800;line-height:1.2}
+.hnav-sub{font-size:10px;color:var(--text2)}
+.hnav-badge{display:inline-block;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-top:3px}
+.home-alerts-section{margin:12px 14px 0}
+.has-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px}
+.alert-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer}
+.alert-row:active{opacity:.8}
+.alert-row.ar-stopped{border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.06)}
+.alert-row.ar-warning{border-color:rgba(232,184,0,.3);background:rgba(232,184,0,.05)}
+.ar-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ar-info{flex:1}
+.ar-unit{font-size:13px;font-weight:700}
+.ar-detail{font-size:10px;color:var(--text2);margin-top:1px}
+/* ── REPORT SCREEN ── */
+.report-body{flex:1;overflow-y:auto;padding:16px 16px 120px}
+.rpt-section{margin-bottom:20px}
+.rpt-section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.rpt-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.rpt-row:last-child{border-bottom:none}
+.rpt-val{font-weight:800;color:var(--text)}
+.rpt-unit-item{padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:6px;border-left:4px solid var(--border)}
+.rpt-ui-num{font-size:14px;font-weight:800}
+.rpt-ui-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.report-actions{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 14px;padding-bottom:calc(12px + var(--safe-bottom));display:flex;gap:10px}
+.report-actions .act-btn{flex:1;padding:14px;border-radius:12px;border:none;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.3px}
+.btn-wa{background:rgba(37,211,102,.15);color:#25d366;border:1px solid rgba(37,211,102,.3)}
+.btn-pdf{background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.3)}
+.btn-close-shift{background:rgba(192,57,43,.15);color:#e06b5f;border:1px solid rgba(192,57,43,.3)}
+/* ── PRINT STYLES ── */
+@media print{
+  body{background:#fff!important;color:#000!important;overflow:auto!important}
+  .screen{position:static!important;display:block!important}
+  #screen-report{display:block!important}
+  .screen:not(#screen-report){display:none!important}
+  .report-actions,.action-bar{display:none!important}
+  .topbar{background:#fff!important;border-bottom:2px solid #000!important;position:static!important;padding:16px!important}
+  .topbar h1{color:#000!important;font-size:20px!important}
+  .topbar .back-btn,.topbar .sub{display:none!important}
+  .rpt-section-title{color:#555!important;border-bottom-color:#ccc!important}
+  .rpt-row{color:#000!important;border-bottom-color:#eee!important}
+  .rpt-val{color:#000!important}
+  .rpt-unit-item{background:#f5f5f5!important;border-color:#999!important}
+  .rpt-ui-num{color:#000!important}
+  .rpt-ui-sub{color:#555!important}
+  .report-body{padding:0!important;overflow:visible!important}
+  @page{margin:15mm;size:A4}
+}
 /* ── ASIGNACIÓN ── */
 .assign-unit-row{margin:0 12px 10px;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden}
 .aur-head{padding:12px 14px 10px;display:flex;align-items:center;gap:10px}
@@ -284,27 +356,41 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </head>
 <body>
 
-<!-- ══════════════════ SCREEN: HOME ══════════════════ -->
+<!-- ══════════════════ SCREEN: HOME MENU ══════════════════ -->
 <div class="screen active" id="screen-home">
-  <div class="topbar">
+  <div class="home-hdr">
     <div style="flex:1">
       <h1>Bitácora Piso</h1>
-      <div class="sub" id="home-date"></div>
+      <div class="hdate" id="home-menu-date"></div>
     </div>
-    <div onclick="openAssign()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;letter-spacing:.3px;color:var(--text2);cursor:pointer" title="Asignación del día">HOY</div>
-    <div onclick="openDashboard()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Panel general">⊞</div>
-    <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Sincronizar">⟳</div>
-  <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000">A</div>
+    <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">⟳</div>
+    <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000">A</div>
   </div>
-  <div class="scroll-body" id="home-list">
-    <!-- generated -->
+  <div class="scroll-body" style="padding:0 0 60px">
+    <div class="turno-bar" id="turno-bar"></div>
+    <div class="home-stats" id="home-stats"></div>
+    <div class="home-nav-grid" id="home-nav"></div>
+    <div class="home-alerts-section" id="home-alerts"></div>
   </div>
+</div>
+
+<!-- ══════════════════ SCREEN: UNITS LIST ══════════════════ -->
+<div class="screen" id="screen-units">
+  <div class="topbar">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div style="flex:1">
+      <h1>Unidades en piso</h1>
+      <div class="sub" id="units-date"></div>
+    </div>
+    <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">⟳</div>
+  </div>
+  <div class="scroll-body" id="home-list"></div>
 </div>
 
 <!-- ══════════════════ SCREEN: UNIT DETAIL ══════════════════ -->
 <div class="screen" id="screen-unit">
   <div class="topbar">
-    <div class="back-btn" onclick="goHome()">‹</div>
+    <div class="back-btn" onclick="goUnits()">‹</div>
     <div style="flex:1">
       <h1 id="unit-title">Unidad</h1>
       <div class="sub" id="unit-sub"></div>
@@ -373,6 +459,42 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div onclick="openAddEmployee()" style="width:36px;height:36px;border-radius:50%;background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);cursor:pointer" title="Nuevo empleado">+</div>
   </div>
   <div class="scroll-body" id="assign-list"></div>
+</div>
+
+<!-- ══════════════════ SCREEN: REPORTE DE TURNO ══════════════════ -->
+<div class="screen" id="screen-report">
+  <div class="topbar">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div style="flex:1">
+      <h1>Reporte de Turno</h1>
+      <div class="sub" id="report-date"></div>
+    </div>
+  </div>
+  <div class="report-body" id="report-body"></div>
+  <div class="report-actions">
+    <button class="act-btn btn-wa" onclick="shareWhatsApp()">WhatsApp</button>
+    <button class="act-btn btn-pdf" onclick="window.print()">PDF / Imprimir</button>
+    <button class="act-btn btn-close-shift" onclick="confirmCloseShift()">Cerrar turno</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: APERTURA DE TURNO ══════════════════ -->
+<div class="modal-overlay" id="modal-shift-open" onclick="closeModal('modal-shift-open')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2>▶ Iniciar turno</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px" id="shift-open-date"></p>
+    <div class="form-group">
+      <label>Supervisor en turno</label>
+      <input class="modal-input" id="shift-supervisor" placeholder="Tu nombre o el del encargado" style="display:block">
+    </div>
+    <div class="form-group">
+      <label>Notas de apertura (opcional)</label>
+      <textarea class="modal-input" id="shift-open-notes" rows="3" placeholder="Ej: Material pendiente, prioridad T-0427, 4 trabajadores disponibles..."></textarea>
+    </div>
+    <button class="modal-btn primary" onclick="startShift()">Iniciar turno</button>
+    <button class="modal-btn cancel" onclick="closeModal('modal-shift-open')">Cancelar</button>
+  </div>
 </div>
 
 <!-- ══════════════════ MODAL: EMPLOYEE PICKER ══════════════════ -->
@@ -792,7 +914,8 @@ async function loadFromDB() {
 
   // Carga local inmediata
   loadLocal();
-  renderHome();
+  loadShift();
+  renderHomeMenu();
 
   // Intenta Supabase en background
   await pingSupabase();
@@ -823,7 +946,7 @@ async function loadFromDB() {
           }))
       }));
       saveLocal();
-      renderHome();
+      renderHomeMenu();
       setConnStatus(true, '☁ Sincronizado');
     } catch(err) {
       console.error(err);
@@ -992,7 +1115,7 @@ function getUnit(id) { return units.find(u => u.id === id); }
 // ── HOME ──────────────────────────────────────────────────────────────────────
 
 function renderHome() {
-  document.getElementById('home-date').textContent = fmtDate(Date.now());
+  document.getElementById('units-date').textContent = fmtDate(Date.now());
 
   const prod = units.filter(u => u.type === 'prod');
   const rep  = units.filter(u => u.type === 'rep');
@@ -1397,7 +1520,8 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function goHome() { activeUnitId = null; clearInterval(tvClockInterval); showScreen('screen-home'); }
+function goHome() { activeUnitId = null; clearInterval(tvClockInterval); showScreen('screen-home'); renderHomeMenu(); }
+function goUnits() { openUnits(); }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1860,6 +1984,297 @@ async function setAndon(status) {
   renderHome();
   await saveUnit(u);
   showToast(`Estado: ${ANDON_LABELS[status].icon} ${ANDON_LABELS[status].txt}`);
+}
+
+// ── HOME MENU ────────────────────────────────────────────────────────────────
+
+function renderHomeMenu() {
+  document.getElementById('home-menu-date').textContent = fmtDate(Date.now());
+
+  // Stats
+  const total  = units.length;
+  const prods  = units.filter(u => u.type === 'prod').length;
+  const reps   = units.filter(u => u.type === 'rep').length;
+  const alerts = units.filter(u =>
+    u.entries.some(e => e.type === 'material' && e.status === 'pending') ||
+    u.andonStatus === 'stopped'
+  ).length;
+
+  document.getElementById('home-stats').innerHTML = `
+    <div class="hstat" onclick="openUnits()"><span class="hs-num">${total}</span><span class="hs-lbl">En piso</span></div>
+    <div class="hstat" onclick="openUnits()"><span class="hs-num">${prods}</span><span class="hs-lbl">Producción</span></div>
+    <div class="hstat" onclick="openUnits()"><span class="hs-num">${reps}</span><span class="hs-lbl">Reparación</span></div>
+    <div class="hstat ${alerts?'hs-alert':'hs-ok'}" onclick="openUnits()"><span class="hs-num">${alerts}</span><span class="hs-lbl">Alertas</span></div>
+  `;
+
+  // Nav cards
+  const empCount = employees.filter(e=>e.active).length;
+  const ds = getDoubleAssigned();
+  document.getElementById('home-nav').innerHTML = `
+    <div class="hnav-card" onclick="openUnits()">
+      <div class="hnav-icon">🏗️</div>
+      <div class="hnav-label">Unidades</div>
+      <div class="hnav-sub">${total} unidad${total!==1?'es':''} registrada${total!==1?'s':''}</div>
+      ${alerts ? `<span class="hnav-badge" style="background:rgba(192,57,43,.15);color:#e06b5f;border:1px solid rgba(192,57,43,.3)">${alerts} alerta${alerts!==1?'s':''}</span>` : ''}
+    </div>
+    <div class="hnav-card" onclick="openDashboard()">
+      <div class="hnav-icon" style="font-size:22px">⊞</div>
+      <div class="hnav-label">Panel General</div>
+      <div class="hnav-sub">Blueprints y etapas</div>
+    </div>
+    <div class="hnav-card" onclick="openTV()" style="border-color:rgba(232,184,0,.3);background:rgba(232,184,0,.05)">
+      <div class="hnav-icon" style="font-size:13px;font-weight:900;letter-spacing:.5px;color:var(--gold)">PISO</div>
+      <div class="hnav-label">Monitor de Planta</div>
+      <div class="hnav-sub">Vista para TV del taller</div>
+    </div>
+    <div class="hnav-card" onclick="openAssign()">
+      <div class="hnav-icon">👥</div>
+      <div class="hnav-label">Asignación HOY</div>
+      <div class="hnav-sub">${empCount} empleado${empCount!==1?'s':''} en catálogo</div>
+      ${ds.size ? `<span class="hnav-badge" style="background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.25)">⚡ ${ds.size} doble${ds.size!==1?'s':''}</span>` : ''}
+    </div>
+  `;
+
+  // Alert rows
+  const alertUnits = units.filter(u =>
+    u.andonStatus === 'stopped' || u.andonStatus === 'warning' ||
+    u.entries.some(e => e.type==='material' && e.status==='pending')
+  ).sort((a,b) => (a.andonStatus==='stopped'?0:1) - (b.andonStatus==='stopped'?0:1));
+
+  if (alertUnits.length) {
+    const rows = alertUnits.slice(0,5).map(u => {
+      const modelObj = MODELS.find(m=>m.id===u.model)||{name:u.model};
+      const isStopped = u.andonStatus === 'stopped';
+      const hasMatAlert = u.entries.some(e=>e.type==='material'&&e.status==='pending');
+      const detail = isStopped ? 'Proceso parado' : hasMatAlert ? 'Material pendiente' : 'Requiere atención';
+      return `<div class="alert-row ${isStopped?'ar-stopped':'ar-warning'}" onclick="openUnit('${u.id}')">
+        <div class="ar-dot" style="background:var(--andon-${u.andonStatus})"></div>
+        <div class="ar-info">
+          <div class="ar-unit">${u.num} · ${modelObj.name}</div>
+          <div class="ar-detail">${detail} · ${stageLabel(u)}</div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">›</span>
+      </div>`;
+    }).join('');
+    document.getElementById('home-alerts').innerHTML =
+      `<div class="has-title">Alertas activas</div>${rows}`;
+  } else {
+    document.getElementById('home-alerts').innerHTML =
+      `<div style="padding:16px;text-align:center;font-size:12px;color:var(--andon-normal)">✓ Sin alertas activas</div>`;
+  }
+
+  renderTurnoBar();
+}
+
+function openUnits() {
+  document.getElementById('units-date').textContent = fmtDate(Date.now());
+  renderHome();
+  showScreen('screen-units');
+}
+
+// ── TURNO / SHIFT ──────────────────────────────────────────────────────────────
+
+let activeShift = null;
+// {id, supervisor, startTime, openNotes, entries_count_at_start, stages_at_start}
+
+function loadShift() {
+  const d = localStorage.getItem('bp_shift');
+  if (d) activeShift = JSON.parse(d);
+}
+function saveShift() {
+  if (activeShift) localStorage.setItem('bp_shift', JSON.stringify(activeShift));
+  else localStorage.removeItem('bp_shift');
+}
+
+function renderTurnoBar() {
+  const el = document.getElementById('turno-bar');
+  if (!el) return;
+  if (!activeShift) {
+    el.innerHTML = `<div class="turno-start" onclick="openShiftStart()">▶ Iniciar turno del día</div>`;
+  } else {
+    const elapsed = shiftElapsed();
+    el.innerHTML = `<div class="turno-active">
+      <div class="ta-pulse"></div>
+      <div class="ta-info">
+        <div class="ta-sup">Turno activo · ${activeShift.supervisor}</div>
+        <div class="ta-time">Inició: ${fmtTimeTs(activeShift.startTime)} · ${elapsed}</div>
+      </div>
+      <div class="ta-close" onclick="openShiftReport()">Ver reporte</div>
+    </div>`;
+  }
+}
+
+function shiftElapsed() {
+  if (!activeShift) return '';
+  const ms = Date.now() - activeShift.startTime;
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return h ? `${h}h ${m}min` : `${m} min`;
+}
+
+function fmtTimeTs(ts) {
+  return new Date(ts).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+}
+
+function openShiftStart() {
+  document.getElementById('shift-open-date').textContent =
+    new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
+  document.getElementById('shift-supervisor').value = '';
+  document.getElementById('shift-open-notes').value = '';
+  openModal('modal-shift-open');
+  setTimeout(() => document.getElementById('shift-supervisor').focus(), 300);
+}
+
+function startShift() {
+  const sup = document.getElementById('shift-supervisor').value.trim();
+  if (!sup) { showToast('Escribe el nombre del supervisor'); return; }
+  // snapshot current state for delta calculation at close
+  const stagesSnapshot = {};
+  units.forEach(u => { stagesSnapshot[u.id] = u.stageIdx; });
+  const entrySnapshot = {};
+  units.forEach(u => { entrySnapshot[u.id] = u.entries.length; });
+
+  activeShift = {
+    id: uid(), supervisor: sup,
+    startTime: Date.now(),
+    openNotes: document.getElementById('shift-open-notes').value.trim() || null,
+    stagesAtStart: stagesSnapshot,
+    entriesAtStart: entrySnapshot,
+  };
+  saveShift();
+  closeModal('modal-shift-open');
+  renderTurnoBar();
+  showToast(`Turno iniciado · ${sup}`);
+}
+
+function openShiftReport() {
+  buildReport();
+  showScreen('screen-report');
+}
+
+function buildReport() {
+  if (!activeShift) return;
+  const now = Date.now();
+  const elapsed = shiftElapsed();
+  const endDate = new Date(now).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  document.getElementById('report-date').textContent =
+    `${fmtTimeTs(activeShift.startTime)} – ${fmtTimeTs(now)} · ${elapsed}`;
+
+  // Calculate activity during this shift
+  const stagesAdvanced = [];
+  const newEntries = [];
+  units.forEach(u => {
+    const prevStage = activeShift.stagesAtStart?.[u.id] ?? u.stageIdx;
+    if (u.stageIdx > prevStage) {
+      stagesAdvanced.push({unit: u, from: prevStage, to: u.stageIdx});
+    }
+    const prevCount = activeShift.entriesAtStart?.[u.id] ?? 0;
+    const newE = u.entries.slice(prevCount);
+    if (newE.length) newEntries.push({unit: u, entries: newE});
+  });
+
+  const totalPhotos  = newEntries.reduce((a,x) => a + x.entries.filter(e=>e.type==='photo').length, 0);
+  const totalNotes   = newEntries.reduce((a,x) => a + x.entries.filter(e=>e.type==='note').length, 0);
+  const totalMats    = newEntries.reduce((a,x) => a + x.entries.filter(e=>e.type==='material').length, 0);
+  const alertsActive = units.filter(u => u.entries.some(e=>e.type==='material'&&e.status==='pending')||u.andonStatus==='stopped').length;
+
+  const workersToday = new Set();
+  units.forEach(u => parseWorkers(u.workers).forEach(w => workersToday.add(w.trim())));
+
+  // Build HTML report
+  let html = `
+  <div class="rpt-section">
+    <div class="rpt-section-title">Resumen del turno</div>
+    <div class="rpt-row"><span>Supervisor</span><span class="rpt-val">${activeShift.supervisor}</span></div>
+    <div class="rpt-row"><span>Fecha</span><span class="rpt-val">${endDate}</span></div>
+    <div class="rpt-row"><span>Duración</span><span class="rpt-val">${elapsed}</span></div>
+    <div class="rpt-row"><span>Trailers en piso</span><span class="rpt-val">${units.length}</span></div>
+    <div class="rpt-row"><span>Etapas avanzadas</span><span class="rpt-val" style="color:var(--andon-normal)">${stagesAdvanced.length}</span></div>
+    <div class="rpt-row"><span>Fotos registradas</span><span class="rpt-val">${totalPhotos}</span></div>
+    <div class="rpt-row"><span>Notas registradas</span><span class="rpt-val">${totalNotes}</span></div>
+    <div class="rpt-row"><span>Materiales reportados</span><span class="rpt-val">${totalMats}</span></div>
+    <div class="rpt-row"><span>Alertas activas al cierre</span><span class="rpt-val" style="color:${alertsActive?'#e06b5f':'var(--andon-normal)'}">${alertsActive || '✓ Ninguna'}</span></div>
+    <div class="rpt-row"><span>Equipo en turno</span><span class="rpt-val">${[...workersToday].join(', ') || '—'}</span></div>
+    ${activeShift.openNotes ? `<div class="rpt-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span style="color:var(--text2)">Notas de apertura</span><span class="rpt-val" style="font-size:12px">${activeShift.openNotes}</span></div>` : ''}
+  </div>`;
+
+  if (stagesAdvanced.length) {
+    html += `<div class="rpt-section">
+      <div class="rpt-section-title">Etapas avanzadas (${stagesAdvanced.length})</div>`;
+    stagesAdvanced.forEach(({unit:u, from, to}) => {
+      const s = getStages(u);
+      html += `<div class="rpt-unit-item" style="border-left-color:var(--andon-normal)">
+        <div class="rpt-ui-num">${u.num}</div>
+        <div class="rpt-ui-sub">${s[from]||'?'} → ${s[to]||'?'} <span style="color:var(--andon-normal);font-weight:700">(+${to-from} etapa${to-from>1?'s':''})</span></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="rpt-section"><div class="rpt-section-title">Estado de trailers al cierre</div>`;
+  units.forEach(u => {
+    const modelObj = MODELS.find(m=>m.id===u.model)||{name:u.model};
+    const andon = u.andonStatus || 'normal';
+    const andonInfo = ANDON_LABELS[andon];
+    const matPending = u.entries.filter(e=>e.type==='material'&&e.status==='pending').length;
+    html += `<div class="rpt-unit-item" style="border-left-color:var(--andon-${andon})">
+      <div class="rpt-ui-num">${u.num} · ${modelObj.name} <span style="font-size:10px;color:${andon==='normal'?'var(--andon-normal)':'var(--andon-'+andon+')'}">${andonInfo.icon} ${andonInfo.txt}</span></div>
+      <div class="rpt-ui-sub">${stageLabel(u)} · ${stagePct(u)}% completado${matPending?` · ⚠ ${matPending} material pendiente`:''}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('report-body').innerHTML = html;
+}
+
+function confirmCloseShift() {
+  if (!confirm('¿Cerrar el turno? Se guardará el reporte.')) return;
+  activeShift = null;
+  saveShift();
+  goHome();
+  showToast('Turno cerrado');
+}
+
+function shareWhatsApp() {
+  if (!activeShift) return;
+  const elapsed = shiftElapsed();
+  const stagesAdvanced = [];
+  units.forEach(u => {
+    const prev = activeShift.stagesAtStart?.[u.id] ?? u.stageIdx;
+    if (u.stageIdx > prev) stagesAdvanced.push(u);
+  });
+  const alertsNow = units.filter(u =>
+    u.andonStatus==='stopped' || u.entries.some(e=>e.type==='material'&&e.status==='pending')
+  );
+  const workersToday = new Set();
+  units.forEach(u => parseWorkers(u.workers).forEach(w => workersToday.add(w.trim())));
+
+  const date = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  let msg = `📋 *Bitácora Piso · SG Trailers*\n`;
+  msg += `*Reporte de Turno — ${date}*\n`;
+  msg += `Supervisor: ${activeShift.supervisor}\n`;
+  msg += `⏱ ${fmtTimeTs(activeShift.startTime)} → ${fmtTimeTs(Date.now())} (${elapsed})\n`;
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  msg += `🏗️ *TRAILERS EN PISO: ${units.length}*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  units.forEach(u => {
+    const modelObj = MODELS.find(m=>m.id===u.model)||{name:u.model};
+    const icon = u.andonStatus==='stopped'?'🔴':u.andonStatus==='warning'?'🟡':'✅';
+    const mat = u.entries.some(e=>e.type==='material'&&e.status==='pending') ? ' ⚠️ Material' : '';
+    msg += `${icon} *${u.num}* ${modelObj.name} — ${stageLabel(u)} (${stagePct(u)}%)${mat}\n`;
+  });
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📊 *ACTIVIDAD DEL TURNO*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  msg += `• Etapas avanzadas: ${stagesAdvanced.length}\n`;
+  if (alertsNow.length) msg += `• Alertas activas: ${alertsNow.length}\n`;
+  if (workersToday.size) msg += `\n👥 *Equipo:* ${[...workersToday].join(', ')}\n`;
+  if (activeShift.openNotes) msg += `\n📝 ${activeShift.openNotes}\n`;
+  msg += `\n#SG_Trailers #BitacoraPiso`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
 }
 
 // ── EMPLOYEES ────────────────────────────────────────────────────────────────
