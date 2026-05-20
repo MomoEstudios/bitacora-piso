@@ -2669,7 +2669,7 @@ let _trailerSVGDoc = null;
 
 async function loadTrailerSVG() {
   try {
-    const resp = await fetch('img/imagenes%20del%20trailer.svg');
+    const resp = await fetch('img/trailer.svg');
     const text = await resp.text();
     const parser = new DOMParser();
     _trailerSVGDoc = parser.parseFromString(text, 'image/svg+xml');
