@@ -2512,6 +2512,7 @@ function tvCard(u) {
     warning: {bg:'rgba(232,184,0,.12)',  border:'var(--andon-warning)', color:'var(--andon-warning)'},
     stopped: {bg:'rgba(192,57,43,.15)',  border:'var(--andon-stopped)', color:'var(--andon-stopped)'},
     waiting: {bg:'rgba(41,128,185,.15)', border:'var(--andon-waiting)', color:'var(--andon-waiting)'},
+    hold:    {bg:'rgba(154,157,181,.1)', border:'var(--andon-hold)',    color:'var(--andon-hold)'},
   };
   const ac = andonColors[andon];
   const statusChip = `<div class="tv-status-chip" style="background:${ac.bg};border:1.5px solid ${ac.border};color:${ac.color}">${andonInfo.icon} ${andonInfo.txt}</div>`;
@@ -2620,7 +2621,8 @@ function dashboardCard(u) {
     warning:{bg:'rgba(232,184,0,.1)', border:'var(--andon-warning)',color:'var(--andon-warning)'},
     stopped:{bg:'rgba(192,57,43,.12)',border:'var(--andon-stopped)',color:'var(--andon-stopped)'},
     waiting:{bg:'rgba(41,128,185,.1)',border:'var(--andon-waiting)',color:'var(--andon-waiting)'},
-  }[andon];
+    hold:   {bg:'rgba(154,157,181,.1)',border:'var(--andon-hold)',  color:'var(--andon-hold)'},
+  }[andon] || {bg:'rgba(154,157,181,.1)',border:'var(--border)',color:'var(--text2)'};
 
   return `
   <div class="db-card" style="border-color:var(--andon-${andon});border-left-width:10px" onclick="openUnit('${u.id}')">
