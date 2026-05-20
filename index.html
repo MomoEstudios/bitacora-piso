@@ -94,6 +94,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .btn-note{background:rgba(41,128,185,.12);color:#4fa3e0;border:1px solid rgba(41,128,185,.25)}
 .btn-material{background:rgba(192,57,43,.12);color:#e06b5f;border:1px solid rgba(192,57,43,.25)}
 .btn-stage{background:rgba(39,174,96,.12);color:#4ec87a;border:1px solid rgba(39,174,96,.25)}
+.btn-listo{background:rgba(39,174,96,.2);color:#27ae60;border:2px solid rgba(39,174,96,.5);font-size:13px}
+.btn-entregar{background:rgba(232,184,0,.2);color:var(--gold);border:2px solid rgba(232,184,0,.5);font-size:13px}
+.archived-banner{margin:14px;padding:12px 16px;background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.25);border-radius:12px;display:flex;align-items:center;gap:10px}
+.archived-banner .ab-icon{font-size:24px}
+.archived-banner .ab-info{flex:1}
+.archived-banner .ab-title{font-size:14px;font-weight:700;color:#27ae60}
+.archived-banner .ab-date{font-size:11px;color:var(--text2);margin-top:2px}
+.badge-archived{background:rgba(39,174,96,.15);color:#27ae60;border:1px solid rgba(39,174,96,.3)}
 
 /* MODALS */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end}
@@ -422,8 +430,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <button class="act-btn btn-material" onclick="openMaterialModal()">
       <span class="icon">⚠️</span>MATERIAL
     </button>
-    <button class="act-btn btn-stage" onclick="openStageModal()">
+    <button class="act-btn btn-stage" id="btn-stage" onclick="openStageModal()">
       <span class="icon">✅</span>ETAPA
+    </button>
+    <button class="act-btn btn-listo" id="btn-listo" style="display:none" onclick="marcarListo()">
+      <span class="icon">✔</span>LISTO
+    </button>
+    <button class="act-btn btn-entregar" id="btn-entregar" style="display:none" onclick="confirmarEntrega()">
+      <span class="icon">📦</span>ENTREGAR
     </button>
   </div>
 </div>
@@ -883,6 +897,7 @@ async function syncToSupabase() {
         rep_reason: u.repReason || null,
         rep_deadline: u.repDeadline || null,
         stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
+        closed_at: u.closedAt ? new Date(u.closedAt).toISOString() : null,
       };
       let supaUnitId;
       if (existing) {
@@ -952,6 +967,7 @@ async function loadFromDB() {
         repReason: u.rep_reason, repDeadline: u.rep_deadline,
         createdAt: new Date(u.created_at).getTime(),
         stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
+        closedAt: u.closed_at ? new Date(u.closed_at).getTime() : null,
         entries: (dbEntries || [])
           .filter(e => e.unit_id === u.id)
           .map(e => ({
@@ -1000,6 +1016,7 @@ async function saveUnit(u) {
       rep_reason: u.repReason || null,
       rep_deadline: u.repDeadline || null,
       stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
+      closed_at: u.closedAt ? new Date(u.closedAt).toISOString() : null,
     };
     const existing = await getSupaUnitId(u.id);
     if (existing) {
@@ -1148,25 +1165,32 @@ function getUnit(id) { return units.find(u => u.id === id); }
 function renderHome() {
   document.getElementById('units-date').textContent = fmtDate(Date.now());
 
-  const prod = units.filter(u => u.type === 'prod');
-  const rep  = units.filter(u => u.type === 'rep');
+  const active   = units.filter(u => !u.closedAt);
+  const archived = units.filter(u =>  u.closedAt);
+  const prod = active.filter(u => u.type === 'prod');
+  const rep  = active.filter(u => u.type === 'rep');
   let html = '';
 
   if (prod.length) {
-    html += `<div class="sec-header">Producción nueva (${prod.length})</div>`;
+    html += `<div class="sec-header">Producción activa (${prod.length})</div>`;
     prod.forEach(u => html += unitCard(u));
   }
   if (rep.length) {
     html += `<div class="sec-header">Reparación / modificación (${rep.length})</div>`;
     rep.forEach(u => html += unitCard(u));
   }
-  if (!units.length) {
-    html += `<div class="empty"><div class="ei">🏗️</div><p>No hay unidades registradas.<br>Agrega la primera unidad en piso.</p></div>`;
+  if (!active.length) {
+    html += `<div class="empty"><div class="ei">🏗️</div><p>No hay unidades activas en piso.</p></div>`;
   }
 
   html += `<div class="add-unit-btn" onclick="openAddUnit()">+ Registrar unidad</div>`;
-  html += `<div style="height:20px"></div>`;
 
+  if (archived.length) {
+    html += `<div class="sec-header" style="margin-top:20px">📦 Archivo — Entregadas (${archived.length})</div>`;
+    archived.forEach(u => html += unitCard(u));
+  }
+
+  html += `<div style="height:20px"></div>`;
   document.getElementById('home-list').innerHTML = html;
 }
 
@@ -1175,8 +1199,8 @@ function unitCard(u) {
   const le = lastEntry(u);
   const ago = le ? fmtTime(le.ts) : 'Sin entradas';
   const hasAlert = u.entries.some(e => e.type==='material' && e.status==='pending');
-  const badgeCls = u.type === 'prod' ? 'badge-prod' : 'badge-rep';
-  const badgeTxt = u.type === 'prod' ? 'Producción' : 'Reparación';
+  const badgeCls = u.closedAt ? 'badge-archived' : u.type === 'prod' ? 'badge-prod' : 'badge-rep';
+  const badgeTxt = u.closedAt ? 'Entregado' : u.type === 'prod' ? 'Producción' : 'Reparación';
   const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model};
   const andon = u.andonStatus || 'normal';
   const andonInfo = ANDON_LABELS[andon];
@@ -1233,12 +1257,36 @@ function renderUnitFeed() {
   const u = getUnit(activeUnitId);
   const stages = getStages(u);
   const pct = stagePct(u);
+  const isQA       = stages[u.stageIdx] === 'QA / Inspección';
+  const isEntrega  = stages[u.stageIdx] === 'Entrega';
+  const isArchived = !!u.closedAt;
+
+  // Show/hide action buttons
+  document.getElementById('btn-stage').style.display    = isEntrega || isArchived ? 'none' : '';
+  document.getElementById('btn-listo').style.display    = isQA && !isArchived ? 'flex' : 'none';
+  document.getElementById('btn-entregar').style.display = isEntrega && !isArchived ? 'flex' : 'none';
+
   const dots = stages.map((s,i) =>
     `<div class="stage-dot ${i < u.stageIdx ? 'done' : i === u.stageIdx ? 'current' : ''}"></div>`
   ).join('');
 
   const andon = u.andonStatus || 'normal';
-  let html = `
+  let html = '';
+
+  // Archived banner
+  if (isArchived) {
+    const closedFmt = new Date(u.closedAt).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+    html += `<div class="archived-banner">
+      <div class="ab-icon">📦</div>
+      <div class="ab-info">
+        <div class="ab-title">Unidad entregada</div>
+        <div class="ab-date">Cerrada el ${closedFmt}</div>
+      </div>
+      <button onclick="reabrirUnidad()" style="padding:7px 14px;border-radius:8px;background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.3);font-size:11px;font-weight:700;cursor:pointer">Reabrir</button>
+    </div>`;
+  }
+
+  html += `
   <div class="stage-bar">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
       <div class="stage-label" style="flex:1;margin:0">Etapa actual · ${pct}% completado</div>
@@ -1246,13 +1294,16 @@ function renderUnitFeed() {
     </div>
     <div class="stage-name">${stageLabel(u)}</div>
     <div class="stage-dots">${dots}</div>
-  </div>
-  <div class="andon-quick">
+  </div>`;
+
+  if (!isArchived) {
+    html += `<div class="andon-quick">
     ${['normal','warning','stopped','waiting','hold'].map(s => {
       const a = ANDON_LABELS[s];
       return `<div class="aq-btn aq-${s}${s===andon?' aq-sel':''}" onclick="setAndon('${s}')">${a.icon}<br>${a.txt}</div>`;
     }).join('')}
   </div>`;
+  }
 
   // Delivery + workers bar
   const dv = fmtDelivery(u.deliveryDate || u.repDeadline);
@@ -1471,6 +1522,51 @@ async function setStage(idx) {
   await saveUnit(u);
   await saveEntry(u.id, entry);
   showToast(`Avanzado a: ${next}`);
+}
+
+// ── LISTO / ENTREGAR / REABRIR ────────────────────────────────────────────────
+
+async function marcarListo() {
+  const u = getUnit(activeUnitId);
+  const stages = getStages(u);
+  const nextIdx = u.stageIdx + 1;
+  if (nextIdx >= stages.length) return;
+  const prev = stages[u.stageIdx];
+  const next = stages[nextIdx];
+  u.stageIdx = nextIdx;
+  u.stageStartedAt = Date.now();
+  const entry = {id:uid(), type:'stage', text:`✔ Inspección aprobada → ${next}`, ts:Date.now()};
+  u.entries.push(entry);
+  renderUnitFeed(); renderHome();
+  await saveUnit(u);
+  await saveEntry(u.id, entry);
+  showToast('✔ Inspección completada');
+}
+
+async function confirmarEntrega() {
+  if (!confirm('¿Confirmar entrega? La unidad se moverá al archivo.')) return;
+  const u = getUnit(activeUnitId);
+  u.closedAt = Date.now();
+  u.andonStatus = 'normal';
+  const entry = {id:uid(), type:'stage', text:'📦 Unidad entregada — expediente cerrado', ts:Date.now()};
+  u.entries.push(entry);
+  renderUnitFeed(); renderHome();
+  await saveUnit(u);
+  await saveEntry(u.id, entry);
+  showToast('📦 Unidad entregada y archivada');
+}
+
+async function reabrirUnidad() {
+  const u = getUnit(activeUnitId);
+  const motivo = prompt('Motivo de reapertura (garantía, revisión, etc.):');
+  if (motivo === null) return;
+  u.closedAt = null;
+  const entry = {id:uid(), type:'note', text:`🔄 Reabierto: ${motivo || 'sin motivo'}`, ts:Date.now()};
+  u.entries.push(entry);
+  renderUnitFeed(); renderHome();
+  await saveUnit(u);
+  await saveEntry(u.id, entry);
+  showToast('Unidad reactivada');
 }
 
 // MATERIAL UPDATE
