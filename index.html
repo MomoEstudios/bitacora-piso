@@ -2671,8 +2671,13 @@ async function loadTrailerSVG() {
   try {
     const resp = await fetch('img/trailer.svg');
     const text = await resp.text();
-    const parser = new DOMParser();
-    _trailerSVGDoc = parser.parseFromString(text, 'image/svg+xml');
+    const div = document.createElement('div');
+    div.innerHTML = text;
+    const svg = div.querySelector('svg');
+    if (svg) {
+      // wrap in a fake document-like object
+      _trailerSVGDoc = { documentElement: svg };
+    }
   } catch(e) { _trailerSVGDoc = null; }
 }
 
