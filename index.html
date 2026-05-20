@@ -2704,6 +2704,44 @@ function trailerSVG(unit) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 loadFromDB();
+
+// Auto-sync cada 10 segundos (cambiar a 30000 para producción)
+setInterval(async () => {
+  if (!supaOnline) return;
+  try {
+    const { data: dbUnits } = await db.from('units').select('*').order('created_at', {ascending:true});
+    const { data: dbEntries } = await db.from('entries').select('*').order('created_at', {ascending:true});
+    units = (dbUnits || []).map(u => ({
+      id: u.local_id || String(u.id),
+      type: u.type, model: u.model, num: u.num,
+      stageIdx: u.stage_idx || 0,
+      andonStatus: u.andon_status || 'normal',
+      deliveryDate: u.delivery_date || u.rep_deadline || null,
+      workers: u.workers || null,
+      repReason: u.rep_reason, repDeadline: u.rep_deadline,
+      createdAt: new Date(u.created_at).getTime(),
+      entries: (dbEntries || [])
+        .filter(e => e.unit_id === u.id)
+        .map(e => ({
+          id: e.local_id || String(e.id),
+          type: e.type, text: e.text, stage: e.stage,
+          rbFrom: e.rb_from, rbTo: e.rb_to,
+          rbType: e.rb_type, rbAuth: e.rb_auth,
+          matId: e.mat_id, matName: e.mat_name, status: e.status,
+          note: e.note, dataUrl: e.photo_url,
+          ts: new Date(e.created_at).getTime()
+        }))
+    }));
+    saveLocal();
+    // Refresca la pantalla activa
+    const active = document.querySelector('.screen.active')?.id;
+    if (active === 'screen-home') renderHomeMenu();
+    else if (active === 'screen-units') renderHome();
+    else if (active === 'screen-dashboard') renderDashboard();
+    else if (active === 'screen-tv') renderTV();
+    else if (active === 'screen-assign') renderAssignScreen();
+  } catch(e) { /* silencioso */ }
+}, 10000);
 </script>
 </body>
 </html>
