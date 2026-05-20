@@ -504,6 +504,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- ══════════════════ SCREEN: BUSCAR ══════════════════ -->
+<div class="screen" id="screen-search">
+  <div class="topbar">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div style="flex:1">
+      <h1>Buscar Unidad</h1>
+    </div>
+  </div>
+  <div style="padding:14px 14px 0">
+    <input id="search-input" class="modal-input" placeholder="Número de unidad, modelo o VIN..." oninput="renderSearch()" autocomplete="off" style="font-size:16px;padding:12px 16px">
+  </div>
+  <div class="scroll-body" id="search-results" style="padding-top:10px"></div>
+</div>
+
 <!-- ══════════════════ MODAL: APERTURA DE TURNO ══════════════════ -->
 <div class="modal-overlay" id="modal-shift-open" onclick="closeModal('modal-shift-open')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -672,6 +686,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div class="form-group">
       <label>Equipo asignado (nombres separados por coma)</label>
       <input class="modal-input" id="new-workers" placeholder="Ej: Juan M, Carlos R, Ana V" style="display:block">
+    </div>
+    <div class="form-group">
+      <label>VIN / Número de serie <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+      <input class="modal-input" id="new-vin" placeholder="Ej: 1HGBH41JXMN109186..." style="display:block;text-transform:uppercase">
     </div>
     <div class="form-group" id="rep-reason-group" style="display:none">
       <label>Motivo de reparación</label>
@@ -890,6 +908,7 @@ async function syncToSupabase() {
       const { data: existing } = await db.from('units').select('id').eq('local_id', u.id).maybeSingle();
       const row = {
         local_id: u.id, type: u.type, model: u.model, num: u.num,
+        vin: u.vin || null,
         stage_idx: u.stageIdx,
         andon_status: u.andonStatus || 'normal',
         delivery_date: u.deliveryDate || u.repDeadline || null,
@@ -960,6 +979,7 @@ async function loadFromDB() {
       units = (dbUnits || []).map(u => ({
         id: u.local_id || String(u.id),
         type: u.type, model: u.model, num: u.num,
+        vin: u.vin || null,
         stageIdx: u.stage_idx || 0,
         andonStatus: u.andon_status || 'normal',
         deliveryDate: u.delivery_date || u.rep_deadline || null,
@@ -1009,6 +1029,7 @@ async function saveUnit(u) {
   try {
     const row = {
       local_id: u.id, type: u.type, model: u.model, num: u.num,
+      vin: u.vin || null,
       stage_idx: u.stageIdx,
       andon_status: u.andonStatus || 'normal',
       delivery_date: u.deliveryDate || u.repDeadline || null,
@@ -1186,7 +1207,7 @@ function renderHome() {
   html += `<div class="add-unit-btn" onclick="openAddUnit()">+ Registrar unidad</div>`;
 
   if (archived.length) {
-    html += `<div class="sec-header" style="margin-top:20px">📦 Archivo — Entregadas (${archived.length})</div>`;
+    html += `<div class="sec-header" data-archive style="margin-top:20px">📦 Archivo — Entregadas (${archived.length})</div>`;
     archived.forEach(u => html += unitCard(u));
   }
 
@@ -1215,7 +1236,7 @@ function unitCard(u) {
       <div class="unit-tag">${u.type==='rep'?'🔧':'🏗️'}</div>
       <div class="uc-info">
         <h2>${modelObj.name} ${u.num}</h2>
-        <div class="uc-sub">${modelObj.sub||''} · ${stageLabel(u)}</div>
+        <div class="uc-sub">${modelObj.sub||''} · ${stageLabel(u)}${u.vin ? ` · <span style="font-family:monospace;letter-spacing:.3px">${u.vin}</span>` : ''}</div>
         <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
           ${dis !== null
             ? `<span class="days-badge ${stageWarn?'db-warn':''}" title="Días en etapa actual">${stageWarn?'⚠':'⏱'} ${dis}d etapa</span>`
@@ -1246,9 +1267,10 @@ function openUnit(id) {
   const u = getUnit(id);
   const modelObj = MODELS.find(m => m.id === u.model) || {name:u.model,sub:''};
   document.getElementById('unit-title').textContent = `${modelObj.name} ${u.num}`;
+  const vinStr = u.vin ? ` · ${u.vin}` : '';
   document.getElementById('unit-sub').textContent = u.type === 'rep'
-    ? `Reparación · ${u.repReason || ''}`
-    : `Producción · ${modelObj.sub}`;
+    ? `Reparación · ${u.repReason || ''}${vinStr}`
+    : `Producción · ${modelObj.sub}${vinStr}`;
   renderUnitFeed();
   showScreen('screen-unit');
 }
@@ -1605,6 +1627,7 @@ async function saveMatUpdate() {
 function openAddUnit() {
   selectedModel = null; selectedType = 'prod';
   document.getElementById('unit-num').value = '';
+  document.getElementById('new-vin').value = '';
   document.getElementById('new-delivery-date').value = '';
   document.getElementById('new-workers').value = '';
   document.getElementById('rep-reason').value = '';
@@ -1636,9 +1659,10 @@ async function saveNewUnit() {
   if (!num) { alert('Ingresa un número de unidad'); return; }
   const deliveryDate = document.getElementById('new-delivery-date').value || null;
   const workers = document.getElementById('new-workers').value.trim() || null;
+  const vin = document.getElementById('new-vin').value.trim().toUpperCase() || null;
   const u = {
     id: uid(), type: selectedType, model: selectedModel, num,
-    stageIdx: 0, andonStatus: 'normal',
+    vin, stageIdx: 0, andonStatus: 'normal',
     deliveryDate, workers,
     createdAt: Date.now(), stageStartedAt: Date.now(), entries: []
   };
@@ -2130,10 +2154,12 @@ function renderHomeMenu() {
   document.getElementById('home-menu-date').textContent = fmtDate(Date.now());
 
   // Stats
-  const total  = units.length;
-  const prods  = units.filter(u => u.type === 'prod').length;
-  const reps   = units.filter(u => u.type === 'rep').length;
-  const alerts = units.filter(u =>
+  const activeUnits = units.filter(u => !u.closedAt);
+  const total    = activeUnits.length;
+  const prods    = activeUnits.filter(u => u.type === 'prod').length;
+  const reps     = activeUnits.filter(u => u.type === 'rep').length;
+  const archived = units.filter(u => u.closedAt).length;
+  const alerts   = activeUnits.filter(u =>
     u.entries.some(e => e.type === 'material' && e.status === 'pending') ||
     u.andonStatus === 'stopped'
   ).length;
@@ -2171,10 +2197,20 @@ function renderHomeMenu() {
       <div class="hnav-sub">${empCount} empleado${empCount!==1?'s':''} en catálogo</div>
       ${ds.size ? `<span class="hnav-badge" style="background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.25)">⚡ ${ds.size} doble${ds.size!==1?'s':''}</span>` : ''}
     </div>
+    <div class="hnav-card" onclick="openUnits('archive')" style="border-color:rgba(39,174,96,.25);background:rgba(39,174,96,.04)">
+      <div class="hnav-icon">📦</div>
+      <div class="hnav-label">Archivo</div>
+      <div class="hnav-sub">${archived} unidad${archived!==1?'es':''} entregada${archived!==1?'s':''}</div>
+    </div>
+    <div class="hnav-card" onclick="openSearch()">
+      <div class="hnav-icon">🔍</div>
+      <div class="hnav-label">Buscar</div>
+      <div class="hnav-sub">Por número, modelo o VIN</div>
+    </div>
   `;
 
-  // Alert rows
-  const alertUnits = units.filter(u => {
+  // Alert rows — solo unidades activas (no archivadas)
+  const alertUnits = activeUnits.filter(u => {
     const dis = daysInStage(u);
     return u.andonStatus === 'stopped' || u.andonStatus === 'warning' ||
       u.entries.some(e => e.type==='material' && e.status==='pending') ||
@@ -2208,10 +2244,44 @@ function renderHomeMenu() {
   renderTurnoBar();
 }
 
-function openUnits() {
+function openSearch() {
+  showScreen('screen-search');
+  document.getElementById('search-input').value = '';
+  renderSearch();
+  setTimeout(() => document.getElementById('search-input').focus(), 200);
+}
+
+function renderSearch() {
+  const q = (document.getElementById('search-input').value || '').trim().toLowerCase();
+  const container = document.getElementById('search-results');
+  if (!q) {
+    container.innerHTML = `<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3)">Escribe para buscar por número, modelo o VIN</div>`;
+    return;
+  }
+  const results = units.filter(u => {
+    const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model};
+    return (u.num || '').toLowerCase().includes(q) ||
+           (u.vin || '').toLowerCase().includes(q) ||
+           modelObj.name.toLowerCase().includes(q) ||
+           (u.model || '').toLowerCase().includes(q);
+  });
+  if (!results.length) {
+    container.innerHTML = `<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--text3)">Sin resultados para "${q}"</div>`;
+    return;
+  }
+  container.innerHTML = results.map(u => unitCard(u)).join('');
+}
+
+function openUnits(scrollTo) {
   document.getElementById('units-date').textContent = fmtDate(Date.now());
   renderHome();
   showScreen('screen-units');
+  if (scrollTo === 'archive') {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('#screen-units .scroll-body .sec-header[data-archive]');
+      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  }
 }
 
 // ── TURNO / SHIFT ──────────────────────────────────────────────────────────────
@@ -2958,12 +3028,15 @@ setInterval(async () => {
     units = (dbUnits || []).map(u => ({
       id: u.local_id || String(u.id),
       type: u.type, model: u.model, num: u.num,
+      vin: u.vin || null,
       stageIdx: u.stage_idx || 0,
       andonStatus: u.andon_status || 'normal',
       deliveryDate: u.delivery_date || u.rep_deadline || null,
       workers: u.workers || null,
       repReason: u.rep_reason, repDeadline: u.rep_deadline,
       createdAt: new Date(u.created_at).getTime(),
+      stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
+      closedAt: u.closed_at ? new Date(u.closed_at).getTime() : null,
       entries: (dbEntries || [])
         .filter(e => e.unit_id === u.id)
         .map(e => ({
