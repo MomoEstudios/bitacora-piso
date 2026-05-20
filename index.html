@@ -188,6 +188,35 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .db-empty{grid-column:1/-1;text-align:center;padding:48px 24px;color:var(--text2)}
 .db-empty .dei{font-size:40px;margin-bottom:10px}
 
+/* ── ASIGNACIÓN ── */
+.assign-unit-row{margin:0 12px 10px;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden}
+.aur-head{padding:12px 14px 10px;display:flex;align-items:center;gap:10px}
+.aur-andon{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.aur-info{flex:1}
+.aur-num{font-size:15px;font-weight:800}
+.aur-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.aur-workers{padding:0 14px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.worker-chip{display:flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;position:relative;border:1px solid rgba(255,255,255,.1)}
+.worker-chip:active{opacity:.75}
+.wc-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#fff;flex-shrink:0}
+.wc-double{position:absolute;top:-4px;right:-4px;font-size:9px;line-height:1;background:#000;border-radius:50%;padding:1px}
+.aur-add-btn{padding:5px 12px;border-radius:20px;background:var(--surface2);border:1px dashed var(--border);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer}
+.aur-add-btn:active{opacity:.7}
+/* Employee picker */
+.emp-picker-list{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto}
+.epl-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:2px solid transparent;cursor:pointer}
+.epl-item:active{opacity:.8}
+.epl-item.epl-sel{border-color:var(--gold)}
+.epl-item.epl-double{opacity:.75}
+.epl-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0}
+.epl-name{flex:1;font-size:14px;font-weight:600}
+.epl-role{font-size:10px;color:var(--text2);margin-top:1px}
+.epl-double-warn{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(232,184,0,.12);color:var(--gold);border:1px solid rgba(232,184,0,.25)}
+.epl-check{font-size:16px;opacity:0}
+.epl-item.epl-sel .epl-check{opacity:1;color:var(--gold)}
+/* Add employee form */
+.emp-form .form-group{margin-bottom:10px}
+
 /* ── ANDON ── */
 :root{--andon-normal:#27ae60;--andon-warning:#e8b800;--andon-stopped:#c0392b;--andon-waiting:#2980b9}
 .andon-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -262,6 +291,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <h1>Bitácora Piso</h1>
       <div class="sub" id="home-date"></div>
     </div>
+    <div onclick="openAssign()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;letter-spacing:.3px;color:var(--text2);cursor:pointer" title="Asignación del día">HOY</div>
     <div onclick="openDashboard()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Panel general">⊞</div>
     <div onclick="manualSync()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" title="Sincronizar">⟳</div>
   <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#000">A</div>
@@ -330,6 +360,59 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div onclick="goHome()" class="tv-exit">✕ Salir</div>
   </div>
   <div class="tv-grid" id="tv-grid"></div>
+</div>
+
+<!-- ══════════════════ SCREEN: ASIGNACIÓN DIARIA ══════════════════ -->
+<div class="screen" id="screen-assign">
+  <div class="topbar">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div style="flex:1">
+      <h1>Asignación del día</h1>
+      <div class="sub" id="assign-date"></div>
+    </div>
+    <div onclick="openAddEmployee()" style="width:36px;height:36px;border-radius:50%;background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);cursor:pointer" title="Nuevo empleado">+</div>
+  </div>
+  <div class="scroll-body" id="assign-list"></div>
+</div>
+
+<!-- ══════════════════ MODAL: EMPLOYEE PICKER ══════════════════ -->
+<div class="modal-overlay" id="modal-emp-picker" onclick="closeModal('modal-emp-picker')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2 id="emp-picker-title">Asignar equipo</h2>
+    <div class="emp-picker-list" id="emp-picker-list"></div>
+    <button class="modal-btn primary" onclick="saveEmpAssignment()" style="margin-top:14px">Guardar asignación</button>
+    <button class="modal-btn cancel" onclick="closeModal('modal-emp-picker')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: ADD EMPLOYEE ══════════════════ -->
+<div class="modal-overlay" id="modal-add-emp" onclick="closeModal('modal-add-emp')">
+  <div class="modal emp-form" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2>👤 Nuevo Empleado</h2>
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input class="modal-input" id="emp-name" placeholder="Ej: Juan Martínez" style="display:block">
+    </div>
+    <div class="form-group">
+      <label>Rol / especialidad</label>
+      <input class="modal-input" id="emp-role" placeholder="Ej: Soldador, Eléctrico, Pintura..." style="display:block">
+    </div>
+    <div class="form-group">
+      <label>Color de avatar</label>
+      <div style="display:flex;gap:8px;margin-top:6px" id="emp-color-picker">
+        <div onclick="selectEmpColor('#c0392b')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#c0392b;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectEmpColor('#2980b9')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#2980b9;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectEmpColor('#27ae60')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#27ae60;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectEmpColor('#8e44ad')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#8e44ad;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectEmpColor('#e67e22')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#e67e22;cursor:pointer;border:3px solid transparent"></div>
+        <div onclick="selectEmpColor('#16a085')" class="emp-color-opt" style="width:32px;height:32px;border-radius:50%;background:#16a085;cursor:pointer;border:3px solid transparent"></div>
+      </div>
+    </div>
+    <button class="modal-btn primary" onclick="saveNewEmployee()">Agregar empleado</button>
+    <button class="modal-btn cancel" onclick="closeModal('modal-add-emp')">Cancelar</button>
+  </div>
 </div>
 
 <!-- HIDDEN CAMERA INPUT -->
@@ -748,6 +831,8 @@ async function loadFromDB() {
     }
   }
   showLoading(false);
+  // load employees in background
+  loadEmployees();
 }
 
 // cache de supa_id por local_id para no hacer lookup cada vez
@@ -1582,6 +1667,189 @@ async function manualSync() {
   }
 }
 
+// ── ASSIGNMENT SCREEN ────────────────────────────────────────────────────────
+
+let assigningUnitId = null;
+let pickerSelected  = [];
+let empColor = '#2980b9';
+
+function openAssign() {
+  document.getElementById('assign-date').textContent = fmtDate(Date.now());
+  renderAssignScreen();
+  showScreen('screen-assign');
+}
+
+function renderAssignScreen() {
+  const ds = getDoubleAssigned();
+  let html = '';
+
+  if (!units.length) {
+    html = `<div class="empty"><div class="ei">🏗️</div><p>Sin unidades registradas.</p></div>`;
+  } else {
+    // double-assigned warning banner
+    if (ds.size) {
+      const names = [...ds].join(', ');
+      html += `<div style="margin:10px 12px 0;padding:10px 14px;background:rgba(232,184,0,.1);border-radius:10px;border:1px solid rgba(232,184,0,.3);font-size:12px;font-weight:700;color:var(--gold)">⚡ Doble asignación: ${names}</div>`;
+    }
+    units.forEach(u => { html += assignUnitRow(u, ds); });
+  }
+
+  document.getElementById('assign-list').innerHTML = html
+    + `<div style="height:20px"></div>`;
+}
+
+function assignUnitRow(u, ds) {
+  const andon = u.andonStatus || 'normal';
+  const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model};
+  const workers  = parseWorkers(u.workers);
+
+  const chips = workers.map(w => {
+    const parts = w.trim().split(/\s+/);
+    const init = parts.length > 1 ? (parts[0][0]+parts[1][0]).toUpperCase() : w.slice(0,2).toUpperCase();
+    const color = getEmpColor(w);
+    const isDouble = ds.has(w.toLowerCase().trim());
+    return `<div class="worker-chip" style="background:${color}20;color:${color}" onclick="removeWorkerFromUnit('${u.id}','${w.replace(/'/g,"\\'")}')">
+      <div class="wc-av" style="background:${color}">${init}</div>
+      ${w.split(' ')[0]}
+      ${isDouble ? `<span class="wc-double">⚡</span>` : ''}
+      <span style="font-size:9px;opacity:.6;margin-left:2px">✕</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="assign-unit-row">
+    <div class="aur-head">
+      <div class="aur-andon ai-${andon}" style="background:var(--andon-${andon})"></div>
+      <div class="aur-info">
+        <div class="aur-num">${u.num}</div>
+        <div class="aur-sub">${modelObj.name} · ${stageLabel(u)}</div>
+      </div>
+    </div>
+    <div class="aur-workers">
+      ${chips || '<span style="font-size:11px;color:var(--text3)">Sin equipo asignado</span>'}
+      <div class="aur-add-btn" onclick="openEmpPicker('${u.id}')">+ Asignar</div>
+    </div>
+  </div>`;
+}
+
+function removeWorkerFromUnit(unitId, name) {
+  const u = getUnit(unitId);
+  if (!u) return;
+  const workers = parseWorkers(u.workers).filter(w => w !== name);
+  u.workers = workers.join(', ') || null;
+  saveUnit(u);
+  renderAssignScreen();
+  renderHome();
+}
+
+// ── EMPLOYEE PICKER ───────────────────────────────────────────────────────────
+
+function openEmpPicker(unitId) {
+  assigningUnitId = unitId;
+  const u = getUnit(unitId);
+  const currentWorkers = parseWorkers(u.workers).map(w => w.toLowerCase().trim());
+  pickerSelected = [...parseWorkers(u.workers)]; // copy current selection
+
+  document.getElementById('emp-picker-title').textContent = `Equipo — ${u.num}`;
+
+  if (!employees.length) {
+    document.getElementById('emp-picker-list').innerHTML =
+      `<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">Sin empleados registrados.<br>Usa el botón + para agregar.</div>`;
+  } else {
+    document.getElementById('emp-picker-list').innerHTML = employees
+      .filter(e => e.active)
+      .map(e => {
+        const key = e.name.toLowerCase().trim();
+        const isSel = currentWorkers.includes(key);
+        const otherUnits = whoIsInUnit(e.name, unitId);
+        const isDouble = otherUnits.length > 0;
+        return `<div class="epl-item ${isSel?'epl-sel':''} ${isDouble&&!isSel?'epl-double':''}"
+          id="epl-${e.id}" onclick="toggleEmpPick('${e.id}','${e.name.replace(/'/g,"\\'")}','${unitId}')">
+          <div class="epl-av" style="background:${e.color}">${empInitials(e.name)}</div>
+          <div style="flex:1">
+            <div class="epl-name">${e.name}</div>
+            <div class="epl-role">${e.role||'Sin rol'}</div>
+          </div>
+          ${isDouble && !isSel ? `<span class="epl-double-warn">⚡ ${otherUnits[0]}</span>` : ''}
+          <span class="epl-check">✓</span>
+        </div>`;
+      }).join('');
+  }
+  openModal('modal-emp-picker');
+}
+
+function empInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : name.slice(0,2).toUpperCase();
+}
+
+function toggleEmpPick(empId, name, unitId) {
+  const idx = pickerSelected.findIndex(w => w.toLowerCase().trim() === name.toLowerCase().trim());
+  if (idx > -1) {
+    pickerSelected.splice(idx, 1);
+  } else {
+    // Check double assignment
+    const otherUnits = whoIsInUnit(name, unitId);
+    if (otherUnits.length) {
+      // Still allow, just show inline warning (already shown)
+    }
+    pickerSelected.push(name);
+  }
+  // update UI
+  document.querySelectorAll('.epl-item').forEach(el => el.classList.remove('epl-sel'));
+  pickerSelected.forEach(n => {
+    const emp = employees.find(e => e.name.toLowerCase().trim() === n.toLowerCase().trim());
+    if (emp) {
+      const el = document.getElementById(`epl-${emp.id}`);
+      if (el) el.classList.add('epl-sel');
+    }
+  });
+}
+
+async function saveEmpAssignment() {
+  const u = getUnit(assigningUnitId);
+  if (!u) return;
+  u.workers = pickerSelected.join(', ') || null;
+  closeModal('modal-emp-picker');
+  await saveUnit(u);
+  renderAssignScreen();
+  renderHome();
+  showToast('Equipo actualizado');
+}
+
+// ── ADD EMPLOYEE ──────────────────────────────────────────────────────────────
+
+function openAddEmployee() {
+  document.getElementById('emp-name').value = '';
+  document.getElementById('emp-role').value = '';
+  empColor = '#2980b9';
+  document.querySelectorAll('.emp-color-opt').forEach(el => el.style.border = '3px solid transparent');
+  document.querySelector('.emp-color-opt[onclick*="2980b9"]').style.border = '3px solid white';
+  openModal('modal-add-emp');
+  setTimeout(() => document.getElementById('emp-name').focus(), 300);
+}
+
+function selectEmpColor(color) {
+  empColor = color;
+  document.querySelectorAll('.emp-color-opt').forEach(el => el.style.border = '3px solid transparent');
+  event.target.style.border = '3px solid white';
+}
+
+async function saveNewEmployee() {
+  const name = document.getElementById('emp-name').value.trim();
+  if (!name) { showToast('Escribe el nombre'); return; }
+  const role  = document.getElementById('emp-role').value.trim();
+  const emp   = { id: uid(), name, role, color: empColor, active: true };
+  employees.push(emp);
+  saveLocalEmployees();
+  await saveEmployeeToSupabase(emp);
+  closeModal('modal-add-emp');
+  showToast(`${name} agregado`);
+  if (document.getElementById('screen-assign').classList.contains('active')) renderAssignScreen();
+  if (assigningUnitId) openEmpPicker(assigningUnitId);
+}
+
 // ── ANDON ─────────────────────────────────────────────────────────────────────
 
 async function setAndon(status) {
@@ -1594,6 +1862,64 @@ async function setAndon(status) {
   showToast(`Estado: ${ANDON_LABELS[status].icon} ${ANDON_LABELS[status].txt}`);
 }
 
+// ── EMPLOYEES ────────────────────────────────────────────────────────────────
+
+let employees = [];
+
+function saveLocalEmployees() {
+  localStorage.setItem('bp_employees', JSON.stringify(employees));
+}
+function loadLocalEmployees() {
+  const d = localStorage.getItem('bp_employees');
+  if (d) { employees = JSON.parse(d); return true; }
+  return false;
+}
+
+async function loadEmployees() {
+  loadLocalEmployees();
+  if (!supaOnline) return;
+  try {
+    const { data } = await db.from('employees').select('*').eq('active', true).order('name');
+    if (data && data.length) {
+      employees = data.map(e => ({
+        id: e.local_id || String(e.id),
+        name: e.name, role: e.role || '', color: e.color || '#2980b9', active: e.active
+      }));
+      saveLocalEmployees();
+    }
+  } catch(err) { console.error('loadEmployees:', err); }
+}
+
+async function saveEmployeeToSupabase(emp) {
+  if (!supaOnline) return;
+  try {
+    const { data: ex } = await db.from('employees').select('id').eq('local_id', emp.id).maybeSingle();
+    const row = { local_id: emp.id, name: emp.name, role: emp.role||null, color: emp.color||null, active: emp.active };
+    if (ex) { await db.from('employees').update(row).eq('local_id', emp.id); }
+    else     { await db.from('employees').insert(row); }
+  } catch(err) { console.error('saveEmp:', err); }
+}
+
+// ── DOUBLE ASSIGNMENT ─────────────────────────────────────────────────────────
+
+function getDoubleAssigned() {
+  const counts = {};
+  units.forEach(u => {
+    parseWorkers(u.workers).forEach(name => {
+      const key = name.toLowerCase().trim();
+      counts[key] = (counts[key] || 0) + 1;
+    });
+  });
+  return new Set(Object.keys(counts).filter(k => counts[k] > 1));
+}
+
+function whoIsInUnit(name, excludeUnitId) {
+  return units
+    .filter(u => u.id !== excludeUnitId)
+    .filter(u => parseWorkers(u.workers).some(w => w.toLowerCase().trim() === name.toLowerCase().trim()))
+    .map(u => u.num);
+}
+
 // ── HELPERS: WORKERS + DELIVERY ──────────────────────────────────────────────
 
 const AVATAR_COLORS = ['#c0392b','#2980b9','#27ae60','#8e44ad','#e67e22','#16a085','#c0393b','#7f8c8d'];
@@ -1604,18 +1930,32 @@ function parseWorkers(str) {
   return str.split(',').map(w => w.trim()).filter(Boolean);
 }
 
-function workerAvatarsHtml(workersStr, size=24) {
+function getEmpColor(name) {
+  const emp = employees.find(e => e.name.toLowerCase().trim() === name.toLowerCase().trim());
+  return emp ? emp.color : AVATAR_COLORS[Math.abs(name.charCodeAt(0)) % AVATAR_COLORS.length];
+}
+
+function workerAvatarsHtml(workersStr, size=24, doubleSet=null) {
   const workers = parseWorkers(workersStr);
   if (!workers.length) return `<span style="font-size:9px;color:var(--text3)">Sin equipo</span>`;
-  const html = workers.slice(0,4).map((w,i) => {
+  const ds = doubleSet || getDoubleAssigned();
+  const html = workers.slice(0,4).map(w => {
     const parts = w.trim().split(/\s+/);
     const init = parts.length > 1
       ? (parts[0][0] + parts[1][0]).toUpperCase()
       : w.slice(0,2).toUpperCase();
-    return `<div class="w-av" style="width:${size}px;height:${size}px;background:${AVATAR_COLORS[i%AVATAR_COLORS.length]}" title="${w}">${init}</div>`;
+    const color = getEmpColor(w);
+    const isDouble = ds.has(w.toLowerCase().trim());
+    const badge = isDouble
+      ? `<span style="position:absolute;top:-4px;right:-4px;font-size:10px;line-height:1;background:#0a0b0f;border-radius:50%;padding:1px" title="${w} está en 2 trailers">⚡</span>`
+      : '';
+    return `<div style="position:relative;display:inline-flex">
+      <div class="w-av" style="width:${size}px;height:${size}px;background:${color}" title="${w}${isDouble?' ⚡ En 2 trailers':''}">${init}</div>
+      ${badge}
+    </div>`;
   }).join('');
   const extra = workers.length > 4
-    ? `<span style="font-size:9px;color:var(--text3)">+${workers.length-4}</span>` : '';
+    ? `<span style="font-size:9px;color:var(--text3);align-self:center">+${workers.length-4}</span>` : '';
   return html + extra;
 }
 
