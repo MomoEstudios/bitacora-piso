@@ -2710,57 +2710,36 @@ const ZONE_STAGE_MAP_REP = {
 };
 
 function trailerSVGFromDoc(unit) {
-  const si = unit.stageIdx;
+  const si  = unit.stageIdx;
   const map = unit.type === 'prod' ? ZONE_STAGE_MAP_PROD : ZONE_STAGE_MAP_REP;
   const clone = _trailerSVGDoc.documentElement.cloneNode(true);
   clone.setAttribute('style', 'width:100%;height:auto;display:block');
   clone.removeAttribute('width'); clone.removeAttribute('height');
 
-  // Colors for each state
-  const COLOR_DONE    = '#27ae60'; // green
-  const COLOR_CURRENT = '#e8b800'; // gold
-  const COLOR_PENDING = '#1a1d2e'; // very dark, near invisible
-
   Object.entries(map).forEach(([zoneId, stageIdxes]) => {
-    const el = clone.querySelector(`[id^="${zoneId}"]`);
+    // Target the overlay-* shape, not the zone-* artwork
+    const overlayId = zoneId.replace('zone-', 'overlay-');
+    const el = clone.querySelector(`[id^="${overlayId}"]`);
     if (!el) return;
+
     const maxStage = Math.max(...stageIdxes);
     const minStage = Math.min(...stageIdxes);
 
-    let overlayColor, overlayOpacity, baseOpacity;
     if (si > maxStage) {
-      overlayColor = COLOR_DONE;    overlayOpacity = '0.55'; baseOpacity = '1';
+      // done — green
+      el.style.opacity = '0.75';
+      el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => {
+        p.setAttribute('fill', '#27ae60');
+      });
     } else if (si >= minStage) {
-      overlayColor = COLOR_CURRENT; overlayOpacity = '0.55'; baseOpacity = '1';
+      // current — gold
+      el.style.opacity = '0.75';
+      el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => {
+        p.setAttribute('fill', '#e8b800');
+      });
     } else {
-      overlayColor = null; baseOpacity = '0.18';
-    }
-
-    el.style.opacity = baseOpacity;
-
-    // Add color overlay rect using mix-blend-mode
-    if (overlayColor) {
-      const vb = clone.getAttribute('viewBox') || '0 0 280 90';
-      const [,, vw, vh] = vb.split(' ').map(Number);
-      const bb = el.getBBox ? el.getBBox() : null;
-      const x  = bb ? bb.x  : 0;
-      const y  = bb ? bb.y  : 0;
-      const w  = bb ? bb.width  : vw;
-      const h  = bb ? bb.height : vh;
-
-      // Create a <rect> sibling overlay right after the zone group
-      const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      overlay.setAttribute('x', x); overlay.setAttribute('y', y);
-      overlay.setAttribute('width', w || vw); overlay.setAttribute('height', h || vh);
-      overlay.setAttribute('fill', overlayColor);
-      overlay.setAttribute('opacity', overlayOpacity);
-      overlay.setAttribute('style', 'mix-blend-mode:color;pointer-events:none');
-      // Wrap zone + overlay in a <g> with isolation
-      const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      wrapper.setAttribute('style', 'isolation:isolate');
-      el.parentNode.insertBefore(wrapper, el);
-      wrapper.appendChild(el);
-      wrapper.appendChild(overlay);
+      // pending — nearly invisible
+      el.style.opacity = '0.08';
     }
   });
 
