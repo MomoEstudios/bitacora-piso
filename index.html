@@ -351,17 +351,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Overlay base */
 .tvo{position:absolute;pointer-events:none}
 /* Header overlay: y=12→160/1099 */
-.tvo-hdr{top:1.1%;left:5%;right:1%;height:13.5%;display:flex;align-items:center;justify-content:space-between}
+.tvo-hdr{top:1.1%;left:5%;right:1%;height:13.5%;display:flex;flex-direction:column;justify-content:center;gap:.25cqw}
 .tvo-hdr-title{font-size:max(10px,3.8cqw);font-weight:900;line-height:1;color:#fff;letter-spacing:-.03em}
 .tvo-hdr-num{color:var(--gold)}
-.tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);margin-top:.3cqw;font-weight:600;letter-spacing:.02em}
-.tvo-hdr-id{font-size:max(6px,1.1cqw);color:rgba(255,255,255,.35);letter-spacing:.03em;text-align:right}
+.tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.02em}
+.tvo-hdr-sep{width:100%;height:1px;background:rgba(255,255,255,.15);flex-shrink:0}
+.tvo-hdr-mats{display:flex;flex-wrap:wrap;gap:.4cqw;align-items:center}
 /* Right stage panel: después de la línea separadora x=1475.5/1947=75.8%, y=185→793/1099 */
 .tvo-stages{top:16.8%;left:75.8%;right:.9%;bottom:27.8%;background:transparent;display:flex;flex-direction:column;justify-content:space-evenly;padding:0 .8cqw}
 .tvo-stage-row{display:flex;align-items:center;padding:.1cqw 0}
 .tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
 /* Material alerts strip: justo sobre la línea y=820, en área del trailer */
-.tvo-mats{top:67%;left:1.4%;width:61%;bottom:26%;display:flex;align-items:center;gap:.6cqw;flex-wrap:wrap;padding:0 .5cqw}
 .tvo-mat-tag{font-size:max(6px,1cqw);font-weight:800;padding:.25cqw .9cqw;border-radius:100px;white-space:nowrap;letter-spacing:.02em}
 .tvo-mat-received{background:rgba(39,174,96,.25);color:#4cd964;border:1px solid rgba(39,174,96,.5)}
 .tvo-mat-transit{background:rgba(41,128,185,.2);color:#5dade2;border:1px solid rgba(41,128,185,.4)}
@@ -1353,6 +1353,28 @@ function renderUnitFeed() {
   </div>`;
   }
 
+  // Alertas de material activas
+  if (!isArchived) {
+    const matMap2 = {};
+    u.entries.filter(e => e.type === 'material').forEach(e => {
+      if (!matMap2[e.matId] || e.ts > matMap2[e.matId].ts) matMap2[e.matId] = e;
+    });
+    const activeMats = Object.values(matMap2).filter(e =>
+      ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0)
+    );
+    if (activeMats.length) {
+      const matLabels = {received:'📦 OFICINA',frontier:'🟠 FRONTERA',transit:'🔵 EN CAMINO'};
+      const preview = activeMats.slice(0,2).map(e=>`<span style="font-size:10px;color:rgba(255,255,255,.55)">${matLabels[e.status]||''} ${e.matName}</span>`).join(' · ');
+      html += `<div style="margin:0 14px 8px;padding:8px 12px;background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.2);border-radius:8px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7)">${activeMats.length} alerta${activeMats.length>1?'s':''} de material</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${preview}${activeMats.length>2?`<span style="font-size:10px;color:rgba(255,255,255,.35)">+${activeMats.length-2} más</span>`:''}</div>
+        </div>
+        <button onclick="clearMatAlerts('${u.id}')" style="padding:4px 12px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap">Limpiar alertas</button>
+      </div>`;
+    }
+  }
+
   // Delivery + workers bar
   const dv = fmtDelivery(u.deliveryDate || u.repDeadline);
   const wkrs = parseWorkers(u.workers);
@@ -2212,6 +2234,16 @@ async function setAndon(status) {
   showToast(`Estado: ${ANDON_LABELS[status].icon} ${ANDON_LABELS[status].txt}`);
 }
 
+async function clearMatAlerts(uid) {
+  const u = getUnit(uid);
+  if (!u) return;
+  u.matClearedAt = Date.now();
+  await saveUnit(u);
+  renderUnitFeed();
+  renderTV();
+  showToast('Alertas de material limpiadas');
+}
+
 // ── HOME MENU ────────────────────────────────────────────────────────────────
 
 function renderHomeMenu() {
@@ -2774,45 +2806,35 @@ function tvCard(u) {
     hold:    {bg:'rgba(154,157,181,.1)', border:'#9a9db5', color:'#9a9db5'},
   }[andon];
 
-  // ID code
-  const now = new Date();
-  const mmyy = String(now.getMonth()+1).padStart(2,'0') + String(now.getFullYear()).slice(-2);
-  const unitId = `${u.num}-${mmyy}`;
-
-  // Materiales accionables: último estado por material, solo transit/frontier/received
+  // Materiales accionables: último estado por material, solo transit/frontier/received, post-limpieza
   const matMap = {};
   u.entries.filter(e => e.type === 'material').forEach(e => {
     if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
   });
   const actionMats = Object.values(matMap)
-    .filter(e => ['received','frontier','transit'].includes(e.status))
+    .filter(e => ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0))
     .sort((a,b) => ({received:0,frontier:1,transit:2}[a.status]||3) - ({received:0,frontier:1,transit:2}[b.status]||3));
-  const matTagsHtml = actionMats.slice(0,4).map(e => {
+  const matTagsHtml = actionMats.slice(0,3).map(e => {
     const cls = e.status === 'received' ? 'tvo-mat-received' : e.status === 'frontier' ? 'tvo-mat-frontier' : 'tvo-mat-transit';
     const icon = e.status === 'received' ? '📦' : e.status === 'frontier' ? '🟠' : '🔵';
     const label = e.status === 'received' ? 'OFICINA' : e.status === 'frontier' ? 'FRONTERA' : 'EN CAMINO';
     return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName} · ${label}</div>`;
-  }).join('') + (actionMats.length > 4 ? `<div class="tvo-mat-tag tvo-mat-transit">+${actionMats.length-4} más</div>` : '');
+  }).join('') + (actionMats.length > 3 ? `<div class="tvo-mat-tag tvo-mat-transit">+${actionMats.length-3} más</div>` : '');
 
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
     <div class="tv-svg-wrap">
       ${trailerSVG(u)}
 
-      <!-- HEADER: unit number + model + ID -->
+      <!-- HEADER: unit number + alerts + model -->
       <div class="tvo tvo-hdr">
-        <div>
-          <div class="tvo-hdr-title">TRÁILER <span class="tvo-hdr-num">${u.num}</span></div>
-          <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${modelObj.sub?' · '+modelObj.sub:''}${u.vin?' · '+u.vin:''}</div>
-        </div>
-        <div class="tvo-hdr-id">ID: ${unitId}</div>
+        <div class="tvo-hdr-title">TRÁILER <span class="tvo-hdr-num">${u.num}</span></div>
+        ${matTagsHtml ? `<div class="tvo-hdr-sep"></div><div class="tvo-hdr-mats">${matTagsHtml}</div><div class="tvo-hdr-sep"></div>` : ''}
+        <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${modelObj.sub?' · '+modelObj.sub:''}${u.vin?' · '+u.vin:''}</div>
       </div>
 
       <!-- RIGHT: Stage panel -->
       <div class="tvo tvo-stages">${stagesHtml}</div>
-
-      <!-- MATERIAL ALERTS: encima de línea y=820, solo transit/frontier/received -->
-      ${matTagsHtml ? `<div class="tvo tvo-mats">${matTagsHtml}</div>` : ''}
 
       <!-- BOTTOM-LEFT: Workers -->
       <div class="tvo tvo-workers">${workersHtml}</div>
