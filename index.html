@@ -356,9 +356,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-hdr-num{color:var(--gold)}
 .tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);margin-top:.3cqw;font-weight:600;letter-spacing:.02em}
 .tvo-hdr-id{font-size:max(6px,1.1cqw);color:rgba(255,255,255,.35);letter-spacing:.03em;text-align:right}
-/* Right stage panel: x=1245/1947≈64%, y=160→820/1099 */
-.tvo-stages{top:14.6%;left:64%;right:.9%;bottom:25.4%;background:rgba(10,9,8,.75);display:flex;flex-direction:column;justify-content:space-evenly;padding:0 1.2cqw}
-.tvo-stage-row{display:flex;align-items:center;padding:.15cqw 0}
+/* Right stage panel: después de la línea separadora x=1475.5/1947=75.8%, y=185→793/1099 */
+.tvo-stages{top:16.8%;left:75.8%;right:.9%;bottom:27.8%;background:transparent;display:flex;flex-direction:column;justify-content:space-evenly;padding:0 .8cqw}
+.tvo-stage-row{display:flex;align-items:center;padding:.1cqw 0}
 .tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
 /* Bottom workers: y=880→1090/1099 */
 .tvo-workers{top:80.5%;left:1.4%;width:38.8%;bottom:.5%;display:flex;align-items:center;justify-content:center;gap:max(4px,1.5cqw);flex-wrap:wrap}
@@ -369,9 +369,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-date{top:79%;left:40.2%;width:27.4%;bottom:.5%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
 .tvo-date-big{font-size:max(10px,3.2cqw);font-weight:900;color:#fff;line-height:1;letter-spacing:-.02em}
 .tvo-date-remaining{font-size:max(6px,1.1cqw);margin-top:.3cqw;color:rgba(255,255,255,.5)}
-/* Bottom status: x=1317→1929/1947 */
-.tvo-status{top:75%;left:67.6%;right:.9%;bottom:.5%;display:flex;justify-content:center;align-items:center;border-radius:10px;border:2px solid transparent}
-.tvo-status-inner{font-size:max(9px,2cqw);font-weight:900;letter-spacing:.06em;display:flex;align-items:center;gap:.8cqw;white-space:nowrap}
+/* Bottom status: posicionado sobre overlay-estadoactual del SVG (x=1379→1881/1947, y=900→1028/1099) */
+.tvo-status{top:81.9%;left:70.8%;right:3.4%;bottom:6.4%;display:flex;justify-content:center;align-items:center}
+.tvo-status-inner{font-size:max(9px,2cqw);font-weight:900;letter-spacing:.06em;color:#fff;white-space:nowrap}
 /* keep w-av for unit detail / dashboard */
 .w-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px}
 </style>
@@ -2800,10 +2800,10 @@ function tvCard(u) {
           : `<span style="font-size:max(8px,1.2cqw);color:rgba(255,255,255,.25)">Sin fecha</span>`}
       </div>
 
-      <!-- BOTTOM-RIGHT: Andon status (texto, color viene del SVG) -->
+      <!-- BOTTOM-RIGHT: texto blanco sobre overlay-estadoactual del SVG -->
       <div class="tvo tvo-status">
-        <div class="tvo-status-inner" style="color:${ac.color}">
-          ${andonInfo.icon} ${andonInfo.txt.toUpperCase()}
+        <div class="tvo-status-inner">
+          ${andonInfo.txt.toUpperCase()}
         </div>
       </div>
     </div>
@@ -2974,8 +2974,10 @@ function trailerSVGFromDoc(unit) {
   clone.setAttribute('style', 'width:100%;height:auto;display:block');
   clone.removeAttribute('width'); clone.removeAttribute('height');
 
-  // current-zone color follows andon status
+  // color de zonas en progreso: gold para etapa actual
   const currColor = andon === 'stopped' ? '#c0392b' : andon === 'warning' ? '#e67e22' : '#e8b800';
+  // color real del estado andon (verde=normal, no gold)
+  const andonColor = {normal:'#27ae60', warning:'#e8b800', stopped:'#c0392b', waiting:'#2980b9', hold:'#9a9db5'}[andon] || '#27ae60';
 
   function applyColor(el, color) {
     el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => p.setAttribute('fill', color));
@@ -3001,11 +3003,11 @@ function trailerSVGFromDoc(unit) {
     }
   });
 
-  // Colorear overlay-estadoactual siempre con el color del andon
+  // overlay-estadoactual: color del andon (verde=normal, rojo=parado, etc.)
   const estadoEl = clone.querySelector('[id="overlay-estadoactual"]');
   if (estadoEl) {
     estadoEl.style.opacity = '1';
-    applyColor(estadoEl, currColor);
+    applyColor(estadoEl, andonColor);
   }
 
   // Alert badge
