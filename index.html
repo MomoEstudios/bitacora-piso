@@ -352,8 +352,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo{position:absolute;pointer-events:none}
 /* Header overlay: y=12→160/1099 */
 .tvo-hdr-left{top:1.1%;left:1.4%;width:34.4%;height:13.5%;display:flex;flex-direction:column;justify-content:center;padding:0 1cqw}
-.tvo-hdr-center{top:1.1%;left:35.8%;width:46.2%;height:13.5%;display:flex;flex-direction:column;justify-content:center;gap:.3cqw;padding:.4cqw .8cqw;overflow:hidden}
-.tvo-hdr-mats-row{display:flex;flex-wrap:wrap;gap:.4cqw;align-items:center}
+.tvo-hdr-center{top:1.1%;left:35.8%;width:46.2%;height:13.5%;display:flex;flex-direction:column;gap:.3cqw;padding:.4cqw .8cqw;overflow:hidden;justify-content:flex-end}
+.tvo-hdr-row-recv{display:flex;flex-wrap:nowrap;gap:.4cqw;overflow:hidden;order:-1;flex-shrink:0}
+.tvo-hdr-row-others{display:flex;flex-wrap:wrap;gap:.4cqw;overflow:hidden;align-content:flex-end;flex:1}
 .tvo-hdr-right{top:1.1%;left:82%;right:1%;height:13.5%;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 1cqw}
 .tvo-hdr-title{font-size:max(10px,3.8cqw);font-weight:900;line-height:1;color:#fff;letter-spacing:-.03em}
 .tvo-hdr-num{color:var(--gold)}
@@ -1392,20 +1393,16 @@ function renderUnitFeed() {
     u.entries.filter(e => e.type === 'material').forEach(e => {
       if (!matMap2[e.matId] || e.ts > matMap2[e.matId].ts) matMap2[e.matId] = e;
     });
-    const activeMats = Object.values(matMap2).filter(e => {
-      if (!['pending','requested','frontier','transit','received'].includes(e.status)) return false;
-      if (e.status === 'received') return e.ts > (u.matClearedAt || 0);
-      return true;
-    });
+    const activeMats = Object.values(matMap2)
+      .filter(e => ['pending','requested','frontier','transit','received'].includes(e.status));
     if (activeMats.length) {
       const matLabels = {pending:'🔴 PENDIENTE',requested:'📋 SOLICITADO',received:'📦 OFICINA',frontier:'🟠 FRONTERA',transit:'🔵 EN CAMINO'};
       const preview = activeMats.slice(0,2).map(e=>`<span style="font-size:10px;color:rgba(255,255,255,.55)">${matLabels[e.status]||''} ${e.matName}</span>`).join(' · ');
-      html += `<div style="margin:0 14px 8px;padding:8px 12px;background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.2);border-radius:8px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap">
+      html += `<div style="margin:0 14px 8px;padding:8px 12px;background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.2);border-radius:8px">
         <div style="display:flex;flex-direction:column;gap:2px">
           <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7)">${activeMats.length} alerta${activeMats.length>1?'s':''} de material</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${preview}${activeMats.length>2?`<span style="font-size:10px;color:rgba(255,255,255,.35)">+${activeMats.length-2} más</span>`:''}</div>
         </div>
-        <button onclick="clearMatAlerts('${u.id}')" style="padding:4px 12px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap">Limpiar recibidos</button>
       </div>`;
     }
   }
@@ -3030,23 +3027,18 @@ function tvCard(u) {
   u.entries.filter(e => e.type === 'material').forEach(e => {
     if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
   });
-  const allActiveMats = Object.values(matMap)
-    .filter(e => {
-      if (!['pending','requested','frontier','transit','received'].includes(e.status)) return false;
-      if (e.status === 'received') return e.ts > (u.matClearedAt || 0);
-      return true;
-    });
-  const pendingMats = allActiveMats.filter(e => e.status !== 'received')
-    .sort((a,b) => ({pending:0,requested:1,frontier:2,transit:3}[a.status]||4) - ({pending:0,requested:1,frontier:2,transit:3}[b.status]||4));
-  const receivedMats = allActiveMats.filter(e => e.status === 'received');
+  const allMats = Object.values(matMap)
+    .filter(e => ['pending','requested','frontier','transit','received'].includes(e.status));
+  const receivedMats = allMats.filter(e => e.status === 'received').sort((a,b) => a.ts - b.ts);
+  const otherMats    = allMats.filter(e => e.status !== 'received').sort((a,b) => a.ts - b.ts);
   function _matTag(e) {
     const cls = e.status==='received'?'tvo-mat-received':e.status==='frontier'?'tvo-mat-frontier':e.status==='pending'?'tvo-mat-pending':'tvo-mat-transit';
     const icon = e.status==='received'?'📦':e.status==='frontier'?'🟠':e.status==='pending'?'🔴':'🔵';
     return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName}</div>`;
   }
-  const topRow = pendingMats.map(_matTag).join('');
-  const bottomRow = receivedMats.map(_matTag).join('');
-  const matTagsHtml = (topRow||bottomRow) ? `${topRow?`<div class="tvo-hdr-mats-row">${topRow}</div>`:''}${bottomRow?`<div class="tvo-hdr-mats-row">${bottomRow}</div>`:''}` : '';
+  const recvRow   = receivedMats.map(_matTag).join('');
+  const othersRow = otherMats.map(_matTag).join('');
+  const matTagsHtml = (recvRow||othersRow) ? `${recvRow?`<div class="tvo-hdr-row-recv">${recvRow}</div>`:''}${othersRow?`<div class="tvo-hdr-row-others">${othersRow}</div>`:''}` : '';
 
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
