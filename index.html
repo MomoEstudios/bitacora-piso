@@ -1392,18 +1392,20 @@ function renderUnitFeed() {
     u.entries.filter(e => e.type === 'material').forEach(e => {
       if (!matMap2[e.matId] || e.ts > matMap2[e.matId].ts) matMap2[e.matId] = e;
     });
-    const activeMats = Object.values(matMap2).filter(e =>
-      ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0)
-    );
+    const activeMats = Object.values(matMap2).filter(e => {
+      if (!['pending','requested','frontier','transit','received'].includes(e.status)) return false;
+      if (e.status === 'received') return e.ts > (u.matClearedAt || 0);
+      return true;
+    });
     if (activeMats.length) {
-      const matLabels = {received:'📦 OFICINA',frontier:'🟠 FRONTERA',transit:'🔵 EN CAMINO'};
+      const matLabels = {pending:'🔴 PENDIENTE',requested:'📋 SOLICITADO',received:'📦 OFICINA',frontier:'🟠 FRONTERA',transit:'🔵 EN CAMINO'};
       const preview = activeMats.slice(0,2).map(e=>`<span style="font-size:10px;color:rgba(255,255,255,.55)">${matLabels[e.status]||''} ${e.matName}</span>`).join(' · ');
       html += `<div style="margin:0 14px 8px;padding:8px 12px;background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.2);border-radius:8px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7)">${activeMats.length} alerta${activeMats.length>1?'s':''} de material</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${preview}${activeMats.length>2?`<span style="font-size:10px;color:rgba(255,255,255,.35)">+${activeMats.length-2} más</span>`:''}</div>
         </div>
-        <button onclick="clearMatAlerts('${u.id}')" style="padding:4px 12px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap">Limpiar alertas</button>
+        <button onclick="clearMatAlerts('${u.id}')" style="padding:4px 12px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap">Limpiar recibidos</button>
       </div>`;
     }
   }
@@ -2274,7 +2276,7 @@ async function clearMatAlerts(uid) {
   await saveUnit(u);
   renderUnitFeed();
   renderTV();
-  showToast('Alertas de material limpiadas');
+  showToast('Materiales recibidos limpiados');
 }
 
 // ── HOME MENU ────────────────────────────────────────────────────────────────
@@ -3029,7 +3031,11 @@ function tvCard(u) {
     if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
   });
   const allActiveMats = Object.values(matMap)
-    .filter(e => ['pending','requested','frontier','transit','received'].includes(e.status) && e.ts > (u.matClearedAt || 0));
+    .filter(e => {
+      if (!['pending','requested','frontier','transit','received'].includes(e.status)) return false;
+      if (e.status === 'received') return e.ts > (u.matClearedAt || 0);
+      return true;
+    });
   const pendingMats = allActiveMats.filter(e => e.status !== 'received')
     .sort((a,b) => ({pending:0,requested:1,frontier:2,transit:3}[a.status]||4) - ({pending:0,requested:1,frontier:2,transit:3}[b.status]||4));
   const receivedMats = allActiveMats.filter(e => e.status === 'received');
