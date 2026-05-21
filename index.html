@@ -1231,12 +1231,6 @@ function renderHome() {
   }
 
   html += `<div class="add-unit-btn" onclick="openAddUnit()">+ Registrar unidad</div>`;
-
-  if (archived.length) {
-    html += `<div class="sec-header" data-archive style="margin-top:20px">📦 Archivo — Entregadas (${archived.length})</div>`;
-    archived.forEach(u => html += unitCard(u));
-  }
-
   html += `<div style="height:20px"></div>`;
   document.getElementById('home-list').innerHTML = html;
 }
@@ -2688,13 +2682,13 @@ function updateTVClock() {
 function renderTV() {
   document.getElementById('tv-date').textContent = fmtDate(Date.now());
   const grid = document.getElementById('tv-grid');
-  if (!units.length) {
+  const active = units.filter(u => !u.closedAt);
+  if (!active.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:#555;font-size:18px">Sin unidades en piso</div>`;
     return;
   }
-  grid.innerHTML = [...units]
+  grid.innerHTML = [...active]
     .sort((a, b) => {
-      // stopped first, then warning, then waiting, then normal
       const order = {stopped:0, warning:1, waiting:2, normal:3};
       return (order[a.andonStatus||'normal'] || 3) - (order[b.andonStatus||'normal'] || 3);
     })
@@ -2817,10 +2811,11 @@ function openDashboard() {
 
 function renderDashboard() {
   document.getElementById('db-date').textContent = fmtDate(Date.now());
-  const total   = units.length;
-  const prods   = units.filter(u => u.type === 'prod').length;
-  const reps    = units.filter(u => u.type === 'rep').length;
-  const alerts  = units.filter(u => u.entries.some(e => e.type === 'material' && e.status === 'pending')).length;
+  const active  = units.filter(u => !u.closedAt);
+  const total   = active.length;
+  const prods   = active.filter(u => u.type === 'prod').length;
+  const reps    = active.filter(u => u.type === 'rep').length;
+  const alerts  = active.filter(u => u.entries.some(e => e.type === 'material' && e.status === 'pending')).length;
 
   document.getElementById('db-stats-bar').innerHTML = `
     <div class="db-stat"><span class="ds-num">${total}</span><span class="ds-label">En piso</span></div>
@@ -2830,12 +2825,12 @@ function renderDashboard() {
   `;
 
   const grid = document.getElementById('db-grid');
-  if (!units.length) {
+  if (!active.length) {
     grid.innerHTML = `<div class="db-empty"><div class="dei">🏗️</div><p>Sin unidades registradas.<br>Agrega la primera desde el inicio.</p></div>`;
     return;
   }
 
-  grid.innerHTML = [...units]
+  grid.innerHTML = [...active]
     .sort((a, b) => a.createdAt - b.createdAt)
     .map(u => dashboardCard(u)).join('');
 }
