@@ -358,8 +358,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-hdr-id{font-size:max(6px,1.1cqw);color:rgba(255,255,255,.35);letter-spacing:.03em;text-align:right}
 /* Right stage panel: x=1245/1947≈64%, y=160→820/1099 */
 .tvo-stages{top:14.6%;left:64%;right:.9%;bottom:25.4%;background:rgba(10,9,8,.75);display:flex;flex-direction:column;justify-content:space-evenly;padding:0 1.2cqw}
-.tvo-stage-row{display:flex;align-items:center;gap:.7cqw;padding:.15cqw 0}
-.tvo-stage-dot{width:max(6px,1cqw);height:max(6px,1cqw);border-radius:50%;flex-shrink:0}
+.tvo-stage-row{display:flex;align-items:center;padding:.15cqw 0}
 .tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
 /* Bottom workers: y=880→1090/1099 */
 .tvo-workers{top:80.5%;left:1.4%;width:38.8%;bottom:.5%;display:flex;align-items:center;justify-content:center;gap:max(4px,1.5cqw);flex-wrap:wrap}
@@ -2732,7 +2731,6 @@ function tvCard(u) {
       dotColor = PEND_C; statusTxt = 'Pendiente'; statusColor = 'rgba(255,255,255,.28)';
     }
     return `<div class="tvo-stage-row">
-      <div class="tvo-stage-dot" style="background:${dotColor}"></div>
       <span class="tvo-stage-status" style="color:${statusColor}">${statusTxt}</span>
     </div>`;
   }).join('');
@@ -2802,8 +2800,8 @@ function tvCard(u) {
           : `<span style="font-size:max(8px,1.2cqw);color:rgba(255,255,255,.25)">Sin fecha</span>`}
       </div>
 
-      <!-- BOTTOM-RIGHT: Andon status (recuadro coloreado) -->
-      <div class="tvo tvo-status" style="background:${ac.bg};border-color:${ac.border}">
+      <!-- BOTTOM-RIGHT: Andon status (texto, color viene del SVG) -->
+      <div class="tvo tvo-status">
         <div class="tvo-status-inner" style="color:${ac.color}">
           ${andonInfo.icon} ${andonInfo.txt.toUpperCase()}
         </div>
