@@ -1020,6 +1020,7 @@ async function loadFromDB() {
         createdAt: new Date(u.created_at).getTime(),
         stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
         closedAt: u.closed_at ? new Date(u.closed_at).getTime() : null,
+        matClearedAt: u.mat_cleared_at ? new Date(u.mat_cleared_at).getTime() : null,
         entries: (dbEntries || [])
           .filter(e => e.unit_id === u.id)
           .map(e => ({
@@ -1070,6 +1071,7 @@ async function saveUnit(u) {
       rep_deadline: u.repDeadline || null,
       stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
       closed_at: u.closedAt ? new Date(u.closedAt).toISOString() : null,
+      mat_cleared_at: u.matClearedAt ? new Date(u.matClearedAt).toISOString() : null,
     };
     const existing = await getSupaUnitId(u.id);
     if (existing) {
