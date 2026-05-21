@@ -337,49 +337,46 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* TV grid — 1 col default, 2 col en pantalla grande */
 .tv-grid{display:grid;grid-template-columns:1fr;gap:14px;padding:14px;overflow-y:auto}
 @media(min-width:720px){.tv-grid{grid-template-columns:1fr 1fr}}
-@media(min-width:1400px){.tv-grid{grid-template-columns:repeat(3,1fr)}}
 /* TV card — borde izquierdo grueso como Andon, tarjeta grande */
-.tv-card{
-  border-radius:14px;
-  border:2px solid var(--border);
-  border-left-width:14px;
-  overflow:hidden;background:var(--surface);cursor:pointer;
-  display:flex;flex-direction:column;
-  min-height:240px
-}
+/* TV CARD — overlay layout (SVG 1947×1099 viewBox) */
+.tv-card{border-radius:14px;border:2px solid var(--border);border-left-width:8px;overflow:hidden;background:var(--surface);cursor:pointer;container-type:inline-size}
 .tv-card.tc-normal{border-color:var(--andon-normal)}
 .tv-card.tc-warning{border-color:var(--andon-warning)}
 .tv-card.tc-stopped{border-color:var(--andon-stopped);animation:andon-pulse 1.2s infinite}
 .tv-card.tc-waiting{border-color:var(--andon-waiting)}
 .tv-card.tc-hold{border-color:var(--andon-hold)}
-/* Split body */
-.tv-split{display:grid;grid-template-columns:48% 52%;flex:1;min-height:0}
-.tv-bp-col{padding:0;border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;overflow:hidden}
-.tv-bp-svg-wrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;padding:10px 10px 6px}
-.tv-bp-svg-wrap svg{width:100%;height:auto;display:block}
-/* overlay strips sobre el SVG */
-.tv-svg-top{position:absolute;top:0;left:0;right:0;padding:6px 10px 5px;background:linear-gradient(to bottom,rgba(10,9,8,.85) 0%,transparent 100%);pointer-events:none}
-.tv-svg-top-num{font-size:15px;font-weight:900;line-height:1;letter-spacing:-.3px;color:#fff}
-.tv-svg-top-model{font-size:9px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.3px;margin-top:1px}
-.tv-svg-bot{position:absolute;bottom:0;left:0;right:0;padding:5px 10px 6px;background:linear-gradient(to top,rgba(10,9,8,.85) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
-.tv-svg-date{font-size:9px;font-weight:700;line-height:1.3}
-.tv-bp-prog{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:2px 10px 6px;font-weight:600;flex-shrink:0}
-.tv-info-col{padding:14px 14px 10px 16px;display:flex;flex-direction:column;overflow:hidden}
-.tv-unit-num{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.5px}
-.tv-model-lbl{font-size:11px;color:var(--text2);margin-top:4px;margin-bottom:10px;letter-spacing:.2px}
-/* Checklist */
-.tv-checklist{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:5px}
-.tv-chk{display:flex;align-items:center;gap:7px}
-.tv-chk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.tv-chk-name{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tv-chk-badge{font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;flex-shrink:0}
-/* Footer */
-.tv-foot{border-top:1px solid var(--border);padding:10px 14px;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;flex-shrink:0}
-.tv-workers{display:flex;gap:4px;align-items:center}
+/* SVG container */
+.tv-svg-wrap{position:relative;width:100%}
+.tv-svg-wrap svg{width:100%;height:auto;display:block}
+/* Overlay base */
+.tvo{position:absolute;pointer-events:none}
+/* Header overlay: y=12→160/1099 */
+.tvo-hdr{top:1.1%;left:5%;right:1%;height:13.5%;display:flex;align-items:center;justify-content:space-between}
+.tvo-hdr-title{font-size:max(10px,3.8cqw);font-weight:900;line-height:1;color:#fff;letter-spacing:-.03em}
+.tvo-hdr-num{color:var(--gold)}
+.tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);margin-top:.3cqw;font-weight:600;letter-spacing:.02em}
+.tvo-hdr-id{font-size:max(6px,1.1cqw);color:rgba(255,255,255,.35);letter-spacing:.03em;text-align:right}
+/* Right stage panel: x=1245/1947≈64%, y=160→820/1099 */
+.tvo-stages{top:14.6%;left:64%;right:.9%;bottom:25.4%;background:rgba(10,9,8,.75);display:flex;flex-direction:column;justify-content:space-evenly;padding:0 1.2cqw}
+.tvo-stage-row{display:flex;align-items:center;gap:.7cqw;padding:.15cqw 0}
+.tvo-stage-icon{font-size:max(7px,1.2cqw);opacity:.8;flex-shrink:0;width:1.8cqw;text-align:center}
+.tvo-stage-dot{width:max(6px,1cqw);height:max(6px,1cqw);border-radius:50%;flex-shrink:0}
+.tvo-stage-name{font-size:max(7px,1.3cqw);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.7)}
+.tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
+/* Bottom workers: y=880→1090/1099 */
+.tvo-workers{top:80.5%;left:1.4%;width:38.8%;bottom:.5%;display:flex;align-items:center;justify-content:center;gap:max(4px,1.5cqw);flex-wrap:wrap}
+.tvo-wkr-item{display:flex;flex-direction:column;align-items:center;gap:.3cqw}
+.tvo-wkr-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:max(8px,2.2cqw);width:max(24px,7cqw);height:max(24px,7cqw);flex-shrink:0}
+.tvo-wkr-name{font-size:max(6px,.9cqw);color:rgba(255,255,255,.55);text-align:center;max-width:7cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Bottom date: x=782→1317/1947 */
+.tvo-date{top:79%;left:40.2%;width:27.4%;bottom:.5%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.tvo-date-big{font-size:max(10px,3.2cqw);font-weight:900;color:#fff;line-height:1;letter-spacing:-.02em}
+.tvo-date-remaining{font-size:max(6px,1.1cqw);margin-top:.3cqw;color:rgba(255,255,255,.5)}
+/* Bottom status: x=1317→1929/1947 */
+.tvo-status{top:79%;left:67.6%;right:.9%;bottom:.5%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.8cqw}
+.tvo-status-pill{border-radius:100px;padding:.6cqw 2.5cqw;font-size:max(8px,1.8cqw);font-weight:900;letter-spacing:.04em;display:flex;align-items:center;gap:.6cqw;white-space:nowrap}
+/* keep w-av for unit detail / dashboard */
 .w-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px}
-.tv-delivery{text-align:center;font-size:11px;line-height:1.4}
-.tv-delivery strong{display:block;font-size:13px;font-weight:800;color:var(--text)}
-.tv-status-chip{padding:6px 12px;border-radius:10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -864,6 +861,11 @@ const STAGES_REP = [
   'QA / Inspección',
   'Entrega',
 ];
+
+const STAGE_SHORT_PROD  = ['Chasis','Soportes','Ejes','Piso','Hidráulico','Eléctrico','Pintura','Ensamble','Inspección','Entrega'];
+const STAGE_SHORT_REP   = ['Diagnóstico','Desmontaje','Reparación','Montaje','Prueba','Acabado','Inspección','Entrega'];
+const STAGE_ICONS_PROD  = ['🔩','🔧','⚙️','📐','💧','⚡','🎨','🔨','✅','🚚'];
+const STAGE_ICONS_REP   = ['🔍','🔧','⚙️','🔩','✔️','🎨','✅','🚚'];
 
 const ANDON_LABELS = {
   normal:  {icon:'🟢', txt:'Normal',   cls:'normal'},
@@ -2707,108 +2709,113 @@ function renderTV() {
 }
 
 function tvCard(u) {
-  const pct      = stagePct(u);
-  const stages   = getStages(u);
-  const isDone   = u.stageIdx >= stages.length - 1;
-  const hasAlert = u.entries.some(e => e.type === 'material' && e.status === 'pending');
-  const modelObj = MODELS.find(m => m.id === u.model) || {name: u.model, sub: ''};
-  const andon    = u.andonStatus || 'normal';
+  const stages    = getStages(u);
+  const si        = u.stageIdx;
+  const modelObj  = MODELS.find(m => m.id === u.model) || {name:u.model, sub:''};
+  const andon     = u.andonStatus || 'normal';
   const andonInfo = ANDON_LABELS[andon];
-  const delivery = fmtDelivery(u.deliveryDate || u.repDeadline);
+  const delivery  = fmtDelivery(u.deliveryDate || u.repDeadline);
+  const wkrs      = parseWorkers(u.workers);
+  const shortNames = u.type === 'prod' ? STAGE_SHORT_PROD : STAGE_SHORT_REP;
+  const icons      = u.type === 'prod' ? STAGE_ICONS_PROD : STAGE_ICONS_REP;
 
-  // Checklist: all stages with status
-  const DONE_COLOR   = 'var(--andon-normal)';
-  const CURR_COLOR   = 'var(--gold)';
-  const PEND_COLOR   = 'var(--border)';
+  // Stage dot colors
+  const DONE_C = '#27ae60';
+  const CURR_C = andon === 'stopped' ? '#c0392b' : andon === 'warning' ? '#e67e22' : '#e8b800';
+  const PEND_C = '#3a3a3a';
 
-  const checklist = stages.map((s, i) => {
-    let dotColor, textStyle, badge = '';
-    if (i < u.stageIdx) {
-      dotColor = DONE_COLOR;
-      textStyle = `color:var(--text2)`;
-    } else if (i === u.stageIdx) {
-      dotColor = CURR_COLOR;
-      textStyle = `color:var(--text);font-weight:700`;
-      badge = `<span class="tv-chk-badge" style="background:rgba(232,184,0,.15);color:var(--gold)">▶</span>`;
+  const stagesHtml = stages.map((s, i) => {
+    const short = shortNames[i] || s;
+    const icon  = icons[i] || '·';
+    let dotColor, statusTxt, statusColor;
+    if (i < si) {
+      dotColor = DONE_C; statusTxt = 'Completado'; statusColor = DONE_C;
+    } else if (i === si) {
+      dotColor = CURR_C;
+      statusTxt = andon === 'stopped' ? 'Problema' : andon === 'warning' ? 'Atención' : 'En progreso';
+      statusColor = CURR_C;
     } else {
-      dotColor = PEND_COLOR;
-      textStyle = `color:var(--text3)`;
+      dotColor = PEND_C; statusTxt = 'Pendiente'; statusColor = 'rgba(255,255,255,.28)';
     }
-    return `<div class="tv-chk">
-      <div class="tv-chk-dot" style="background:${dotColor}"></div>
-      <span class="tv-chk-name" style="${textStyle}">${s}</span>
-      ${badge}
+    return `<div class="tvo-stage-row">
+      <span class="tvo-stage-icon">${icon}</span>
+      <div class="tvo-stage-dot" style="background:${dotColor}"></div>
+      <span class="tvo-stage-name" style="${i===si?'color:#fff;font-weight:700':''}">${short}</span>
+      <span class="tvo-stage-status" style="color:${statusColor}">${statusTxt}</span>
     </div>`;
   }).join('');
 
-  // Andon status chip
-  const andonColors = {
-    normal:  {bg:'rgba(39,174,96,.15)',  border:'var(--andon-normal)',  color:'var(--andon-normal)'},
-    warning: {bg:'rgba(232,184,0,.12)',  border:'var(--andon-warning)', color:'var(--andon-warning)'},
-    stopped: {bg:'rgba(192,57,43,.15)',  border:'var(--andon-stopped)', color:'var(--andon-stopped)'},
-    waiting: {bg:'rgba(41,128,185,.15)', border:'var(--andon-waiting)', color:'var(--andon-waiting)'},
-    hold:    {bg:'rgba(154,157,181,.1)', border:'var(--andon-hold)',    color:'var(--andon-hold)'},
-  };
-  const ac = andonColors[andon];
-  const statusChip = `<div class="tv-status-chip" style="background:${ac.bg};border:1.5px solid ${ac.border};color:${ac.color}">${andonInfo.icon} ${andonInfo.txt}</div>`;
+  // Worker avatars with name
+  const workersHtml = wkrs.length
+    ? wkrs.slice(0,4).map(name => {
+        const parts = name.trim().split(/\s+/);
+        const init  = parts.length > 1 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+        const color = getEmpColor(name);
+        const short = parts.length > 1 ? `${parts[0][0]}. ${parts[parts.length-1]}` : parts[0];
+        return `<div class="tvo-wkr-item">
+          <div class="tvo-wkr-av" style="background:${color}">${init}</div>
+          <div class="tvo-wkr-name">${short}</div>
+        </div>`;
+      }).join('')
+    : `<span style="font-size:max(7px,1.1cqw);color:rgba(255,255,255,.25)">Sin equipo</span>`;
 
-  // Delivery display
-  const deliveryHtml = delivery
-    ? `<div class="tv-delivery">
-        <strong>${delivery.fmt}</strong>
-        <span style="color:${delivery.urgencyColor};font-size:9px">${delivery.urgency}</span>
-      </div>`
-    : `<div class="tv-delivery"><span style="color:var(--text3);font-size:9px">Sin fecha</span></div>`;
+  // Big date format: DD/MMM/YYYY
+  let dateBig = '', daysRem = '';
+  const dateKey = u.deliveryDate || u.repDeadline;
+  if (dateKey) {
+    const d = new Date(dateKey + 'T12:00:00');
+    dateBig = `${String(d.getDate()).padStart(2,'0')}/${d.toLocaleString('es-MX',{month:'short'}).toUpperCase().replace('.','')}/${d.getFullYear()}`;
+    daysRem = delivery ? delivery.urgency : '';
+  }
 
-  const wkrs = parseWorkers(u.workers);
-  const dateOverlay = delivery
-    ? `<div class="tv-svg-date" style="color:${delivery.urgencyColor}">📅 ${delivery.fmt}<span style="font-size:8px;display:block;opacity:.8">${delivery.urgency}</span></div>`
-    : `<div class="tv-svg-date" style="color:rgba(255,255,255,.3)">Sin fecha</div>`;
-  const workersOverlay = wkrs.length
-    ? `<div style="display:flex;gap:3px">${workerAvatarsHtml(u.workers, 20)}</div>`
-    : '';
+  // Status pill
+  const ac = {
+    normal:  {bg:'rgba(39,174,96,.18)',  border:'#27ae60', color:'#27ae60'},
+    warning: {bg:'rgba(232,184,0,.18)',  border:'#e8b800', color:'#e8b800'},
+    stopped: {bg:'rgba(192,57,43,.2)',   border:'#c0392b', color:'#c0392b'},
+    waiting: {bg:'rgba(41,128,185,.18)', border:'#2980b9', color:'#2980b9'},
+    hold:    {bg:'rgba(154,157,181,.1)', border:'#9a9db5', color:'#9a9db5'},
+  }[andon];
+
+  // ID code
+  const now = new Date();
+  const mmyy = String(now.getMonth()+1).padStart(2,'0') + String(now.getFullYear()).slice(-2);
+  const unitId = `${u.num}-${mmyy}`;
 
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
-    <div class="tv-split">
-      <!-- LEFT: Blueprint con overlay -->
-      <div class="tv-bp-col">
-        <div class="tv-bp-svg-wrap">
-          ${trailerSVG(u)}
-          <!-- overlay top: número + modelo -->
-          <div class="tv-svg-top">
-            <div class="tv-svg-top-num">${u.num}</div>
-            <div class="tv-svg-top-model">${modelObj.name} · ${u.type==='rep'?'REP':'PROD'}${u.vin ? ` · ${u.vin}` : ''}</div>
-          </div>
-          <!-- overlay bottom: fecha + trabajadores -->
-          <div class="tv-svg-bot">
-            ${dateOverlay}
-            ${workersOverlay}
-          </div>
+    <div class="tv-svg-wrap">
+      ${trailerSVG(u)}
+
+      <!-- HEADER: unit number + model + ID -->
+      <div class="tvo tvo-hdr">
+        <div>
+          <div class="tvo-hdr-title">TRÁILER <span class="tvo-hdr-num">${u.num}</span></div>
+          <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${modelObj.sub?' · '+modelObj.sub:''}${u.vin?' · '+u.vin:''}</div>
         </div>
-        <div class="tv-bp-prog">
-          <span>${stages[u.stageIdx] || 'Completado'}</span>
-          <span>${pct}%</span>
-        </div>
-        ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);padding:0 10px 6px">⚠ Material pendiente</div>` : ''}
+        <div class="tvo-hdr-id">ID: ${unitId}</div>
       </div>
-      <!-- RIGHT: Days + Checklist -->
-      <div class="tv-info-col">
-        <div class="tv-unit-num">${u.num}</div>
-        <div class="tv-model-lbl">${modelObj.name} · ${u.type==='rep'?'Rep.':'Prod.'} · ${modelObj.sub||''}</div>
-        <div style="display:flex;gap:6px;margin:4px 0 6px;flex-wrap:wrap">
-          ${(()=>{const dis=daysInStage(u);const dip=daysInPiso(u);const sw=dis!==null&&dis>=3;
-            return (dis!==null?`<span class="days-badge ${sw?'db-warn':''}">${sw?'⚠':'⏱'} ${dis}d etapa</span>`:`<span class="days-badge db-hold">⏸ HOLD</span>`)
-            +`<span class="days-badge">📅 ${dip}d piso</span>`;})()}
-        </div>
-        <div class="tv-checklist">${checklist}</div>
+
+      <!-- RIGHT: Stage panel -->
+      <div class="tvo tvo-stages">${stagesHtml}</div>
+
+      <!-- BOTTOM-LEFT: Workers -->
+      <div class="tvo tvo-workers">${workersHtml}</div>
+
+      <!-- BOTTOM-MIDDLE: Delivery date -->
+      <div class="tvo tvo-date">
+        ${dateBig
+          ? `<div class="tvo-date-big" style="color:${delivery?.urgencyColor||'#fff'}">${dateBig}</div>
+             <div class="tvo-date-remaining">${daysRem}</div>`
+          : `<span style="font-size:max(8px,1.2cqw);color:rgba(255,255,255,.25)">Sin fecha</span>`}
       </div>
-    </div>
-    <!-- FOOTER -->
-    <div class="tv-foot">
-      <div class="tv-workers">${workerAvatarsHtml(u.workers, 24)}</div>
-      ${deliveryHtml}
-      ${statusChip}
+
+      <!-- BOTTOM-RIGHT: Andon status -->
+      <div class="tvo tvo-status">
+        <div class="tvo-status-pill" style="background:${ac.bg};border:1.5px solid ${ac.border};color:${ac.color}">
+          ${andonInfo.icon} ${andonInfo.txt.toUpperCase()}
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -2937,64 +2944,69 @@ async function loadTrailerSVG() {
   } catch(e) { _trailerSVGDoc = null; }
 }
 
-// Zone → stages that "complete" it (production 10 stages)
+// Zone → stages that "complete" it — IDs match new SVG overlay groups
 const ZONE_STAGE_MAP_PROD = {
   'zone-chasis':     [0, 1],
+  'zone-frente':     [0, 1],
+  'zone-patin':      [0, 1],
   'zone-ejes':       [2],
-  'zone-ruedas':     [2],
+  'zone-llantas':    [2],
   'zone-piso':       [3],
+  'zone-centro':     [3],
   'zone-winch':      [4],
   'zone-electrico':  [5],
+  'zone-luces':      [5],
   'zone-primer':     [6],
-  'zone-color':      [6],
-  'zone-frente':     [7],
-  'zone-patin':      [7],
+  'zone-pintura':    [6],
   'zone-inspeccion': [8],
 };
 const ZONE_STAGE_MAP_REP = {
   'zone-chasis':     [0],
-  'zone-ejes':       [1],
-  'zone-piso':       [2],
-  'zone-winch':      [3],
-  'zone-electrico':  [4],
-  'zone-color':      [5],
-  'zone-inspeccion': [6],
-  'zone-ruedas':     [1],
   'zone-frente':     [0],
   'zone-patin':      [0],
+  'zone-ejes':       [1],
+  'zone-llantas':    [1],
+  'zone-piso':       [2],
+  'zone-centro':     [2],
+  'zone-winch':      [3],
+  'zone-electrico':  [4],
+  'zone-luces':      [4],
   'zone-primer':     [5],
+  'zone-pintura':    [5],
+  'zone-inspeccion': [6],
 };
 
 function trailerSVGFromDoc(unit) {
-  const si  = unit.stageIdx;
-  const map = unit.type === 'prod' ? ZONE_STAGE_MAP_PROD : ZONE_STAGE_MAP_REP;
+  const si    = unit.stageIdx;
+  const andon = unit.andonStatus || 'normal';
+  const map   = unit.type === 'prod' ? ZONE_STAGE_MAP_PROD : ZONE_STAGE_MAP_REP;
   const clone = _trailerSVGDoc.documentElement.cloneNode(true);
   clone.setAttribute('style', 'width:100%;height:auto;display:block');
   clone.removeAttribute('width'); clone.removeAttribute('height');
 
+  // current-zone color follows andon status
+  const currColor = andon === 'stopped' ? '#c0392b' : andon === 'warning' ? '#e67e22' : '#e8b800';
+
+  function applyColor(el, color) {
+    el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => p.setAttribute('fill', color));
+    el.querySelectorAll('line').forEach(p => p.setAttribute('stroke', color));
+  }
+
   Object.entries(map).forEach(([zoneId, stageIdxes]) => {
-    // Target the overlay-* shape, not the zone-* artwork
     const overlayId = zoneId.replace('zone-', 'overlay-');
-    const el = clone.querySelector(`[id^="${overlayId}"]`);
+    const el = clone.querySelector(`[id="${overlayId}"]`) || clone.querySelector(`[id^="${overlayId}"]`);
     if (!el) return;
 
     const maxStage = Math.max(...stageIdxes);
     const minStage = Math.min(...stageIdxes);
 
     if (si > maxStage) {
-      // done — green
       el.style.opacity = '0.75';
-      el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => {
-        p.setAttribute('fill', '#27ae60');
-      });
+      applyColor(el, '#27ae60');
     } else if (si >= minStage) {
-      // current — gold
       el.style.opacity = '0.75';
-      el.querySelectorAll('path,rect,circle,polygon,ellipse').forEach(p => {
-        p.setAttribute('fill', '#e8b800');
-      });
+      applyColor(el, currColor);
     } else {
-      // pending — nearly invisible
       el.style.opacity = '0.08';
     }
   });
@@ -3002,10 +3014,10 @@ function trailerSVGFromDoc(unit) {
   // Alert badge
   const hasAlert = unit.entries.some(e => e.type === 'material' && e.status === 'pending');
   if (hasAlert) {
-    const vb = clone.getAttribute('viewBox') || '0 0 280 90';
+    const vb = clone.getAttribute('viewBox') || '0 0 1947 1099';
     const vw = Number(vb.split(' ')[2]);
     const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    badge.innerHTML = `<circle cx="${vw-8}" cy="10" r="8" fill="#c0392b"/><text x="${vw-8}" y="14" text-anchor="middle" font-size="10" fill="#fff" font-family="-apple-system,sans-serif" font-weight="700">!</text>`;
+    badge.innerHTML = `<circle cx="${vw-30}" cy="30" r="22" fill="#c0392b"/><text x="${vw-30}" y="37" text-anchor="middle" font-size="22" fill="#fff" font-family="-apple-system,sans-serif" font-weight="700">!</text>`;
     clone.appendChild(badge);
   }
 
