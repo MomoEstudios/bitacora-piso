@@ -782,6 +782,24 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- ══════════════════ MODAL: CAMBIAR FECHA DE ENTREGA ══════════════════ -->
+<div class="modal-overlay" id="modal-delivery-date" onclick="closeModal('modal-delivery-date')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2>📅 Fecha de Entrega</h2>
+    <div class="form-group">
+      <label>Nueva fecha de entrega</label>
+      <input class="modal-input" id="edit-delivery-date" type="date" style="display:block">
+    </div>
+    <div class="form-group">
+      <label>Motivo del cambio</label>
+      <input class="modal-input" id="edit-delivery-reason" placeholder="Ej: Retraso en material, cambio de pedido..." style="display:block">
+    </div>
+    <button class="modal-btn" onclick="saveDeliveryDate()">Guardar cambio</button>
+    <button class="modal-btn cancel" onclick="closeModal('modal-delivery-date')">Cancelar</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
@@ -1330,9 +1348,15 @@ function renderUnitFeed() {
   // Delivery + workers bar
   const dv = fmtDelivery(u.deliveryDate || u.repDeadline);
   const wkrs = parseWorkers(u.workers);
-  if (dv || wkrs.length) {
+  if (dv || wkrs.length || !isArchived) {
     html += `<div style="margin:0 14px 10px;padding:10px 14px;background:var(--surface);border-radius:10px;border:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      ${dv ? `<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="color:var(--text3)">Entrega:</span><strong style="color:${dv.urgencyColor}">${dv.fmt}</strong><span style="font-size:10px;color:${dv.urgencyColor}">(${dv.urgency})</span></div>` : ''}
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;flex:1">
+        <span style="color:var(--text3)">Entrega:</span>
+        ${dv
+          ? `<strong style="color:${dv.urgencyColor}">${dv.fmt}</strong><span style="font-size:10px;color:${dv.urgencyColor}">(${dv.urgency})</span>`
+          : `<span style="color:var(--text3)">Sin fecha</span>`}
+        ${!isArchived ? `<button onclick="openDeliveryDateModal()" style="margin-left:4px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:10px;color:var(--text2);cursor:pointer">✎ Editar</button>` : ''}
+      </div>
       ${wkrs.length ? `<div style="display:flex;align-items:center;gap:5px">${workerAvatarsHtml(u.workers, 28)}</div>` : ''}
     </div>`;
   }
@@ -1576,6 +1600,38 @@ async function confirmarEntrega() {
   await saveUnit(u);
   await saveEntry(u.id, entry);
   showToast('📦 Unidad entregada y archivada');
+}
+
+function openDeliveryDateModal() {
+  const u = getUnit(activeUnitId);
+  const cur = u.deliveryDate || u.repDeadline || '';
+  document.getElementById('edit-delivery-date').value = cur;
+  document.getElementById('edit-delivery-reason').value = '';
+  openModal('modal-delivery-date');
+}
+
+async function saveDeliveryDate() {
+  const u = getUnit(activeUnitId);
+  const newDate = document.getElementById('edit-delivery-date').value || null;
+  const reason  = document.getElementById('edit-delivery-reason').value.trim();
+  const oldDate = u.deliveryDate || u.repDeadline || null;
+
+  if (newDate === oldDate) { closeModal('modal-delivery-date'); return; }
+
+  const oldFmt  = oldDate ? new Date(oldDate + 'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : 'sin fecha';
+  const newFmt  = newDate ? new Date(newDate + 'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : 'eliminada';
+  const note    = reason ? ` — ${reason}` : '';
+
+  u.deliveryDate = newDate;
+  if (u.type === 'rep') u.repDeadline = newDate;
+
+  const entry = {id:uid(), type:'note', text:`📅 Fecha de entrega cambiada: ${oldFmt} → ${newFmt}${note}`, ts:Date.now()};
+  u.entries.push(entry);
+  closeModal('modal-delivery-date');
+  renderUnitFeed(); renderHome();
+  await saveUnit(u);
+  await saveEntry(u.id, entry);
+  showToast('Fecha de entrega actualizada');
 }
 
 async function reabrirUnidad() {
