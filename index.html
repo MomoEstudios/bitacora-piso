@@ -352,7 +352,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo{position:absolute;pointer-events:none}
 /* Header overlay: y=12→160/1099 */
 .tvo-hdr-left{top:1.1%;left:1.4%;width:34.4%;height:13.5%;display:flex;flex-direction:column;justify-content:center;padding:0 1cqw}
-.tvo-hdr-center{top:1.1%;left:35.8%;width:46.2%;height:13.5%;display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:.4cqw;padding:0 .8cqw}
+.tvo-hdr-center{top:1.1%;left:35.8%;width:46.2%;height:13.5%;display:flex;flex-direction:column;justify-content:center;gap:.3cqw;padding:.4cqw .8cqw;overflow:hidden}
+.tvo-hdr-mats-row{display:flex;flex-wrap:wrap;gap:.4cqw;align-items:center}
 .tvo-hdr-right{top:1.1%;left:82%;right:1%;height:13.5%;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 1cqw}
 .tvo-hdr-title{font-size:max(10px,3.8cqw);font-weight:900;line-height:1;color:#fff;letter-spacing:-.03em}
 .tvo-hdr-num{color:var(--gold)}
@@ -3026,14 +3027,19 @@ function tvCard(u) {
   u.entries.filter(e => e.type === 'material').forEach(e => {
     if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
   });
-  const actionMats = Object.values(matMap)
-    .filter(e => ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0))
-    .sort((a,b) => ({received:0,frontier:1,transit:2}[a.status]||3) - ({received:0,frontier:1,transit:2}[b.status]||3));
-  const matTagsHtml = actionMats.slice(0,3).map(e => {
-    const cls = e.status === 'received' ? 'tvo-mat-received' : e.status === 'frontier' ? 'tvo-mat-frontier' : 'tvo-mat-transit';
-    const icon = e.status === 'received' ? '📦' : e.status === 'frontier' ? '🟠' : '🔵';
+  const allActiveMats = Object.values(matMap)
+    .filter(e => ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0));
+  const pendingMats = allActiveMats.filter(e => e.status !== 'received')
+    .sort((a,b) => ({frontier:0,transit:1}[a.status]||2) - ({frontier:0,transit:1}[b.status]||2));
+  const receivedMats = allActiveMats.filter(e => e.status === 'received');
+  function _matTag(e) {
+    const cls = e.status==='received'?'tvo-mat-received':e.status==='frontier'?'tvo-mat-frontier':'tvo-mat-transit';
+    const icon = e.status==='received'?'📦':e.status==='frontier'?'🟠':'🔵';
     return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName}</div>`;
-  }).join('') + (actionMats.length > 3 ? `<div class="tvo-mat-tag tvo-mat-transit">+${actionMats.length-3} más</div>` : '');
+  }
+  const topRow = pendingMats.map(_matTag).join('');
+  const bottomRow = receivedMats.map(_matTag).join('');
+  const matTagsHtml = (topRow||bottomRow) ? `${topRow?`<div class="tvo-hdr-mats-row">${topRow}</div>`:''}${bottomRow?`<div class="tvo-hdr-mats-row">${bottomRow}</div>`:''}` : '';
 
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
