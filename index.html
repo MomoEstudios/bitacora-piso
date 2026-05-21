@@ -351,12 +351,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Overlay base */
 .tvo{position:absolute;pointer-events:none}
 /* Header overlay: y=12→160/1099 */
-.tvo-hdr{top:1.1%;left:5%;right:1%;height:13.5%;display:flex;flex-direction:column;justify-content:center;gap:.25cqw}
+.tvo-hdr-left{top:1.1%;left:1.4%;width:34.4%;height:13.5%;display:flex;flex-direction:column;justify-content:center;padding:0 1cqw}
+.tvo-hdr-center{top:1.1%;left:35.8%;width:46.2%;height:13.5%;display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:.4cqw;padding:0 .8cqw}
+.tvo-hdr-right{top:1.1%;left:82%;right:1%;height:13.5%;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 1cqw}
 .tvo-hdr-title{font-size:max(10px,3.8cqw);font-weight:900;line-height:1;color:#fff;letter-spacing:-.03em}
 .tvo-hdr-num{color:var(--gold)}
-.tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.02em}
-.tvo-hdr-sep{width:100%;height:1px;background:rgba(255,255,255,.15);flex-shrink:0}
-.tvo-hdr-mats{display:flex;flex-wrap:wrap;gap:.4cqw;align-items:center}
+.tvo-hdr-sub{font-size:max(7px,1.3cqw);color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.02em;text-align:right}
 /* Right stage panel: después de la línea separadora x=1475.5/1947=75.8%, y=185→793/1099 */
 .tvo-stages{top:16.8%;left:75.8%;right:.9%;bottom:27.8%;background:transparent;display:flex;flex-direction:column;justify-content:space-evenly;padding:0 .8cqw}
 .tvo-stage-row{display:flex;align-items:center;padding:.1cqw 0}
@@ -2828,11 +2828,17 @@ function tvCard(u) {
     <div class="tv-svg-wrap">
       ${trailerSVG(u)}
 
-      <!-- HEADER: unit number + alerts + model -->
-      <div class="tvo tvo-hdr">
+      <!-- HEADER LEFT: TRÁILER [num] -->
+      <div class="tvo tvo-hdr-left">
         <div class="tvo-hdr-title">TRÁILER <span class="tvo-hdr-num">${u.num}</span></div>
-        ${matTagsHtml ? `<div class="tvo-hdr-sep"></div><div class="tvo-hdr-mats">${matTagsHtml}</div><div class="tvo-hdr-sep"></div>` : ''}
-        <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${modelObj.sub?' · '+modelObj.sub:''}${u.vin?' · '+u.vin:''}</div>
+      </div>
+
+      <!-- HEADER CENTER: alertas de material -->
+      ${matTagsHtml ? `<div class="tvo tvo-hdr-center">${matTagsHtml}</div>` : ''}
+
+      <!-- HEADER RIGHT: modelo + VIN -->
+      <div class="tvo tvo-hdr-right">
+        <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${u.vin?`<br><span style="font-family:monospace;letter-spacing:.5px;font-size:max(6px,1cqw)">${u.vin}</span>`:''}</div>
       </div>
 
       <!-- RIGHT: Stage panel -->
