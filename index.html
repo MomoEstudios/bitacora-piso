@@ -380,6 +380,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-status-inner{font-size:max(9px,2cqw);font-weight:900;letter-spacing:.06em;color:#fff;white-space:nowrap}
 /* keep w-av for unit detail / dashboard */
 .w-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px}
+/* ── REPORTES ── */
+.rpt-tabs{display:flex;padding:10px 14px 0;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.rpt-tab{flex:1;padding:9px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:color .15s,border-color .15s}
+.rpt-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.rpt-period-bar{display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0}
+.rpt-period-btn{padding:6px 16px;border-radius:100px;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.rpt-period-btn.active{background:rgba(232,184,0,.12);border-color:rgba(232,184,0,.4);color:var(--gold)}
+.rpt-unit-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.rpt-unit-row:active{opacity:.8}
+.rpt-emp-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.rpt-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.rpt-stat{background:var(--surface);border-radius:10px;padding:10px 6px;text-align:center}
+.rpt-stat-num{font-size:20px;font-weight:900;color:#fff;line-height:1}
+.rpt-stat-lbl{font-size:9px;color:var(--text3);margin-top:3px;font-weight:700;letter-spacing:.05em}
 </style>
 </head>
 <body>
@@ -493,6 +507,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div onclick="openAddEmployee()" style="width:36px;height:36px;border-radius:50%;background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);cursor:pointer" title="Nuevo empleado">+</div>
   </div>
   <div class="scroll-body" id="assign-list"></div>
+</div>
+
+<!-- ══════════════════ SCREEN: REPORTES ══════════════════ -->
+<div class="screen" id="screen-analytics" style="display:flex;flex-direction:column">
+  <div class="topbar">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div style="flex:1"><h1>Reportes</h1></div>
+  </div>
+  <div class="rpt-tabs">
+    <button class="rpt-tab active" id="rpt-tab-trailer"  onclick="setRptTab('trailer')">Tráiler</button>
+    <button class="rpt-tab"        id="rpt-tab-persona"  onclick="setRptTab('persona')">Persona</button>
+    <button class="rpt-tab"        id="rpt-tab-periodo"  onclick="setRptTab('periodo')">Período</button>
+  </div>
+  <div id="rpt-controls"></div>
+  <div id="rpt-results" style="overflow-y:auto;flex:1;padding:10px 14px 80px"></div>
 </div>
 
 <!-- ══════════════════ SCREEN: REPORTE DE TURNO ══════════════════ -->
@@ -2305,6 +2334,11 @@ function renderHomeMenu() {
       <div class="hnav-label">Buscar</div>
       <div class="hnav-sub">Por número, modelo o VIN</div>
     </div>
+    <div class="hnav-card" onclick="openAnalytics()">
+      <div class="hnav-icon">📊</div>
+      <div class="hnav-label">Reportes</div>
+      <div class="hnav-sub">Por tráiler, persona o período</div>
+    </div>
   `;
 
   // Alert rows — solo unidades activas (no archivadas)
@@ -2363,6 +2397,185 @@ function openSearch() {
   document.getElementById('search-input').value = '';
   renderSearch();
   setTimeout(() => document.getElementById('search-input').focus(), 200);
+}
+
+// ── REPORTES ─────────────────────────────────────────────────────────────────
+let rptTab = 'trailer';
+let rptPeriod = 'day';
+let rptQuery = '';
+
+function openAnalytics() {
+  rptQuery = '';
+  showScreen('screen-analytics');
+  renderAnalytics();
+}
+
+function setRptTab(tab) {
+  rptTab = tab;
+  rptQuery = '';
+  ['trailer','persona','periodo'].forEach(t =>
+    document.getElementById(`rpt-tab-${t}`)?.classList.toggle('active', t === tab)
+  );
+  renderAnalytics();
+}
+
+function setRptPeriod(p) {
+  rptPeriod = p;
+  renderAnalytics();
+}
+
+function renderAnalytics() {
+  const ctrl = document.getElementById('rpt-controls');
+  if (!ctrl) return;
+  if (rptTab === 'periodo') {
+    const pl = {day:'Hoy',week:'Esta semana',month:'Este mes'};
+    ctrl.innerHTML = `<div class="rpt-period-bar">${['day','week','month'].map(p =>
+      `<button class="rpt-period-btn${p===rptPeriod?' active':''}" onclick="setRptPeriod('${p}')">${pl[p]}</button>`
+    ).join('')}</div>`;
+  } else {
+    const ph = rptTab==='persona' ? 'Buscar empleado...' : 'Buscar por número, modelo, VIN o trabajador...';
+    ctrl.innerHTML = `<div style="padding:10px 14px 0"><input class="modal-input" placeholder="${ph}" value="${rptQuery.replace(/"/g,'&quot;')}" oninput="rptQuery=this.value;renderAnalyticsResults()" style="font-size:15px;padding:10px 14px"></div>`;
+    setTimeout(() => ctrl.querySelector('input')?.focus(), 50);
+  }
+  renderAnalyticsResults();
+}
+
+function getPeriodRange(p) {
+  const s = new Date();
+  if (p === 'day') { s.setHours(0,0,0,0); }
+  else if (p === 'week') { s.setDate(s.getDate() - (s.getDay()===0?6:s.getDay()-1)); s.setHours(0,0,0,0); }
+  else if (p === 'month') { s.setDate(1); s.setHours(0,0,0,0); }
+  return { from: s.getTime(), to: Date.now() };
+}
+
+function renderAnalyticsResults() {
+  const res = document.getElementById('rpt-results');
+  if (!res) return;
+  const q = (rptQuery || '').toLowerCase().trim();
+
+  if (rptTab === 'trailer') {
+    const all = [...units].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+    const list = q ? all.filter(u => {
+      const mn = (MODELS.find(m=>m.id===u.model)?.name||'').toLowerCase();
+      return String(u.num).includes(q) || mn.includes(q) ||
+             (u.vin||'').toLowerCase().includes(q) ||
+             (u.workers||'').toLowerCase().includes(q);
+    }) : all;
+    if (!list.length) { res.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px">${q?'Sin resultados':'No hay unidades'}</div>`; return; }
+    res.innerHTML = list.map(u => {
+      const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
+      const pct = stagePct(u);
+      const andon = u.andonStatus||'normal';
+      const isArch = !!u.closedAt;
+      const ec = {photo:0,note:0,material:0,stage:0};
+      u.entries.forEach(e => { if(ec[e.type]!==undefined) ec[e.type]++; });
+      const wkrs = parseWorkers(u.workers);
+      const cFmt = new Date(u.createdAt||0).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'2-digit'});
+      const dk = u.deliveryDate||u.repDeadline;
+      const dFmt = dk ? new Date(dk+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'2-digit'}) : null;
+      const clFmt = u.closedAt ? new Date(u.closedAt).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'2-digit'}) : null;
+      return `<div class="rpt-unit-row" style="border-left:4px solid var(--andon-${andon})" onclick="openUnit('${u.id}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:14px;font-weight:900;color:#fff">Tráiler ${u.num} <span style="font-weight:400;font-size:12px;color:var(--text3)">· ${mo.name} · ${u.type==='rep'?'Rep':'Prod'}</span></span>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:${isArch?'rgba(39,174,96,.12)':'rgba(255,255,255,.07)'};color:${isArch?'#4cd964':'var(--text2)'}">
+            ${isArch?'✓ Entregado':stageLabel(u)}
+          </span>
+        </div>
+        <div style="background:rgba(255,255,255,.07);border-radius:4px;height:3px;margin-bottom:8px">
+          <div style="height:3px;border-radius:4px;background:${isArch?'#27ae60':'var(--gold)'};width:${pct}%"></div>
+        </div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+          <span>📷 ${ec.photo}</span><span>📝 ${ec.note}</span><span>⚠️ ${ec.material}</span><span>✅ ${ec.stage} etapas</span>
+          <span style="margin-left:auto">${cFmt}${clFmt?' → '+clFmt:dFmt?' · '+dFmt:''}</span>
+        </div>
+        ${wkrs.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:7px">${workerAvatarsHtml(u.workers,22)}</div>` : ''}
+      </div>`;
+    }).join('');
+
+  } else if (rptTab === 'persona') {
+    const empMap = {};
+    units.forEach(u => parseWorkers(u.workers).forEach(w => {
+      if (!empMap[w]) empMap[w] = [];
+      empMap[w].push(u);
+    }));
+    let workers = Object.keys(empMap).sort();
+    if (q) workers = workers.filter(w => w.toLowerCase().includes(q));
+    if (!workers.length) { res.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px">${q?'Sin resultados':'Sin trabajadores asignados'}</div>`; return; }
+    res.innerHTML = workers.map(w => {
+      const wu = empMap[w];
+      const active = wu.filter(u=>!u.closedAt).length;
+      const color = getEmpColor(w);
+      const parts = w.trim().split(/\s+/);
+      const init = parts.length>1?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():w.slice(0,2).toUpperCase();
+      return `<div class="rpt-emp-row">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:38px;height:38px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:13px;flex-shrink:0">${init}</div>
+          <div>
+            <div style="font-weight:700;color:#fff;font-size:14px">${w}</div>
+            <div style="font-size:11px;color:var(--text3)">${wu.length} unidad${wu!==1?'es':''} · ${active} activa${active!==1?'s':''}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${wu.slice(0,5).map(u => {
+            const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
+            return `<div onclick="openUnit('${u.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;cursor:pointer">
+              <span style="font-size:12px;color:var(--text2)">Tráiler ${u.num} · ${mo.name}</span>
+              <span style="font-size:10px;color:${u.closedAt?'var(--green)':'var(--text3)'}">${u.closedAt?'✓ Entregado':stageLabel(u)}</span>
+            </div>`;
+          }).join('')}
+          ${wu.length>5?`<div style="font-size:11px;color:var(--text3);text-align:center;padding:3px">+${wu.length-5} más</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+  } else if (rptTab === 'periodo') {
+    const {from,to} = getPeriodRange(rptPeriod);
+    const allEntries = [];
+    units.forEach(u => u.entries.forEach(e => {
+      if (e.ts>=from && e.ts<=to) allEntries.push({...e,unit:u});
+    }));
+    allEntries.sort((a,b)=>b.ts-a.ts);
+    const photos = allEntries.filter(e=>e.type==='photo').length;
+    const notes  = allEntries.filter(e=>e.type==='note').length;
+    const mats   = allEntries.filter(e=>e.type==='material').length;
+    const stages = allEntries.filter(e=>e.type==='stage').length;
+    const uids   = new Set(allEntries.map(e=>e.unit.id));
+    const stats = `<div class="rpt-stat-grid">
+      <div class="rpt-stat"><div class="rpt-stat-num">${allEntries.length}</div><div class="rpt-stat-lbl">ENTRADAS</div></div>
+      <div class="rpt-stat"><div class="rpt-stat-num">${uids.size}</div><div class="rpt-stat-lbl">UNIDADES</div></div>
+      <div class="rpt-stat"><div class="rpt-stat-num">${stages}</div><div class="rpt-stat-lbl">ETAPAS</div></div>
+      <div class="rpt-stat"><div class="rpt-stat-num">${photos}</div><div class="rpt-stat-lbl">FOTOS</div></div>
+      <div class="rpt-stat"><div class="rpt-stat-num">${notes}</div><div class="rpt-stat-lbl">NOTAS</div></div>
+      <div class="rpt-stat"><div class="rpt-stat-num">${mats}</div><div class="rpt-stat-lbl">MATERIALES</div></div>
+    </div>`;
+    if (!allEntries.length) { res.innerHTML = stats+`<div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px">Sin actividad en este período</div>`; return; }
+    const byUnit = {};
+    allEntries.forEach(e => {
+      if (!byUnit[e.unit.id]) byUnit[e.unit.id]={unit:e.unit,entries:[]};
+      byUnit[e.unit.id].entries.push(e);
+    });
+    const sections = Object.values(byUnit).map(({unit:u,entries:ues}) => {
+      const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
+      const typeIcon = {photo:'📷',note:'📝',material:'⚠️',stage:'✅',rollback:'↩',andon:'🔔'};
+      return `<div style="margin-bottom:12px">
+        <div onclick="openUnit('${u.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface);border-radius:10px;margin-bottom:3px;cursor:pointer;border:1px solid var(--border)">
+          <span style="font-weight:700;color:#fff;font-size:13px">Tráiler ${u.num} · ${mo.name}</span>
+          <span style="font-size:11px;color:var(--text3)">${ues.length} entrada${ues.length!==1?'s':''}</span>
+        </div>
+        ${ues.slice(0,4).map(e => {
+          const ic = typeIcon[e.type]||'·';
+          const txt = e.type==='photo'?(e.caption||'Foto'):e.type==='stage'?e.text:e.type==='material'?`${e.matName} · ${statusLabel(e.status).txt}`:e.text||'';
+          return `<div style="display:flex;gap:8px;padding:5px 12px;font-size:12px;color:var(--text2);align-items:center">
+            <span style="flex-shrink:0">${ic}</span>
+            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${txt}</span>
+            <span style="flex-shrink:0;color:var(--text3);font-size:11px">${fmtTime(e.ts)}</span>
+          </div>`;
+        }).join('')}
+        ${ues.length>4?`<div style="font-size:11px;color:var(--text3);padding:2px 12px">+${ues.length-4} más</div>`:''}
+      </div>`;
+    }).join('');
+    res.innerHTML = stats + sections;
+  }
 }
 
 function renderSearch() {
@@ -2819,8 +3032,7 @@ function tvCard(u) {
   const matTagsHtml = actionMats.slice(0,3).map(e => {
     const cls = e.status === 'received' ? 'tvo-mat-received' : e.status === 'frontier' ? 'tvo-mat-frontier' : 'tvo-mat-transit';
     const icon = e.status === 'received' ? '📦' : e.status === 'frontier' ? '🟠' : '🔵';
-    const label = e.status === 'received' ? 'OFICINA' : e.status === 'frontier' ? 'FRONTERA' : 'EN CAMINO';
-    return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName} · ${label}</div>`;
+    return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName}</div>`;
   }).join('') + (actionMats.length > 3 ? `<div class="tvo-mat-tag tvo-mat-transit">+${actionMats.length-3} más</div>` : '');
 
   return `
