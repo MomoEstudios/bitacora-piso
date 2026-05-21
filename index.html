@@ -2095,7 +2095,7 @@ function renderAssignScreen() {
       const names = [...ds].join(', ');
       html += `<div style="margin:10px 12px 0;padding:10px 14px;background:rgba(232,184,0,.1);border-radius:10px;border:1px solid rgba(232,184,0,.3);font-size:12px;font-weight:700;color:var(--gold)">⚡ Doble asignación: ${names}</div>`;
     }
-    units.forEach(u => { html += assignUnitRow(u, ds); });
+    units.filter(u => !u.closedAt).forEach(u => { html += assignUnitRow(u, ds); });
   }
 
   document.getElementById('assign-list').innerHTML = html
