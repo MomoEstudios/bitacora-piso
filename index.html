@@ -359,9 +359,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Right stage panel: x=1245/1947≈64%, y=160→820/1099 */
 .tvo-stages{top:14.6%;left:64%;right:.9%;bottom:25.4%;background:rgba(10,9,8,.75);display:flex;flex-direction:column;justify-content:space-evenly;padding:0 1.2cqw}
 .tvo-stage-row{display:flex;align-items:center;gap:.7cqw;padding:.15cqw 0}
-.tvo-stage-icon{font-size:max(7px,1.2cqw);opacity:.8;flex-shrink:0;width:1.8cqw;text-align:center}
 .tvo-stage-dot{width:max(6px,1cqw);height:max(6px,1cqw);border-radius:50%;flex-shrink:0}
-.tvo-stage-name{font-size:max(7px,1.3cqw);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.7)}
 .tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
 /* Bottom workers: y=880→1090/1099 */
 .tvo-workers{top:80.5%;left:1.4%;width:38.8%;bottom:.5%;display:flex;align-items:center;justify-content:center;gap:max(4px,1.5cqw);flex-wrap:wrap}
@@ -2716,8 +2714,6 @@ function tvCard(u) {
   const andonInfo = ANDON_LABELS[andon];
   const delivery  = fmtDelivery(u.deliveryDate || u.repDeadline);
   const wkrs      = parseWorkers(u.workers);
-  const shortNames = u.type === 'prod' ? STAGE_SHORT_PROD : STAGE_SHORT_REP;
-  const icons      = u.type === 'prod' ? STAGE_ICONS_PROD : STAGE_ICONS_REP;
 
   // Stage dot colors
   const DONE_C = '#27ae60';
@@ -2725,8 +2721,6 @@ function tvCard(u) {
   const PEND_C = '#3a3a3a';
 
   const stagesHtml = stages.map((s, i) => {
-    const short = shortNames[i] || s;
-    const icon  = icons[i] || '·';
     let dotColor, statusTxt, statusColor;
     if (i < si) {
       dotColor = DONE_C; statusTxt = 'Completado'; statusColor = DONE_C;
@@ -2738,9 +2732,7 @@ function tvCard(u) {
       dotColor = PEND_C; statusTxt = 'Pendiente'; statusColor = 'rgba(255,255,255,.28)';
     }
     return `<div class="tvo-stage-row">
-      <span class="tvo-stage-icon">${icon}</span>
       <div class="tvo-stage-dot" style="background:${dotColor}"></div>
-      <span class="tvo-stage-name" style="${i===si?'color:#fff;font-weight:700':''}">${short}</span>
       <span class="tvo-stage-status" style="color:${statusColor}">${statusTxt}</span>
     </div>`;
   }).join('');
