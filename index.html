@@ -360,6 +360,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-stages{top:16.8%;left:75.8%;right:.9%;bottom:27.8%;background:transparent;display:flex;flex-direction:column;justify-content:space-evenly;padding:0 .8cqw}
 .tvo-stage-row{display:flex;align-items:center;padding:.1cqw 0}
 .tvo-stage-status{font-size:max(6px,1.1cqw);font-weight:700;letter-spacing:.02em;white-space:nowrap}
+/* Material alerts strip: justo sobre la línea y=820, en área del trailer */
+.tvo-mats{top:67%;left:1.4%;width:61%;bottom:26%;display:flex;align-items:center;gap:.6cqw;flex-wrap:wrap;padding:0 .5cqw}
+.tvo-mat-tag{font-size:max(6px,1cqw);font-weight:800;padding:.25cqw .9cqw;border-radius:100px;white-space:nowrap;letter-spacing:.02em}
+.tvo-mat-received{background:rgba(39,174,96,.25);color:#4cd964;border:1px solid rgba(39,174,96,.5)}
+.tvo-mat-transit{background:rgba(41,128,185,.2);color:#5dade2;border:1px solid rgba(41,128,185,.4)}
+.tvo-mat-frontier{background:rgba(230,126,34,.2);color:#f0a14a;border:1px solid rgba(230,126,34,.4)}
 /* Bottom workers: y=880→1090/1099 */
 .tvo-workers{top:80.5%;left:1.4%;width:38.8%;bottom:.5%;display:flex;align-items:center;justify-content:center;gap:max(4px,1.5cqw);flex-wrap:wrap}
 .tvo-wkr-item{display:flex;flex-direction:column;align-items:center;gap:.3cqw}
@@ -2773,6 +2779,21 @@ function tvCard(u) {
   const mmyy = String(now.getMonth()+1).padStart(2,'0') + String(now.getFullYear()).slice(-2);
   const unitId = `${u.num}-${mmyy}`;
 
+  // Materiales accionables: último estado por material, solo transit/frontier/received
+  const matMap = {};
+  u.entries.filter(e => e.type === 'material').forEach(e => {
+    if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
+  });
+  const actionMats = Object.values(matMap)
+    .filter(e => ['received','frontier','transit'].includes(e.status))
+    .sort((a,b) => ({received:0,frontier:1,transit:2}[a.status]||3) - ({received:0,frontier:1,transit:2}[b.status]||3));
+  const matTagsHtml = actionMats.slice(0,4).map(e => {
+    const cls = e.status === 'received' ? 'tvo-mat-received' : e.status === 'frontier' ? 'tvo-mat-frontier' : 'tvo-mat-transit';
+    const icon = e.status === 'received' ? '📦' : e.status === 'frontier' ? '🟠' : '🔵';
+    const label = e.status === 'received' ? 'OFICINA' : e.status === 'frontier' ? 'FRONTERA' : 'EN CAMINO';
+    return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName} · ${label}</div>`;
+  }).join('') + (actionMats.length > 4 ? `<div class="tvo-mat-tag tvo-mat-transit">+${actionMats.length-4} más</div>` : '');
+
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
     <div class="tv-svg-wrap">
@@ -2789,6 +2810,9 @@ function tvCard(u) {
 
       <!-- RIGHT: Stage panel -->
       <div class="tvo tvo-stages">${stagesHtml}</div>
+
+      <!-- MATERIAL ALERTS: encima de línea y=820, solo transit/frontier/received -->
+      ${matTagsHtml ? `<div class="tvo tvo-mats">${matTagsHtml}</div>` : ''}
 
       <!-- BOTTOM-LEFT: Workers -->
       <div class="tvo tvo-workers">${workersHtml}</div>
