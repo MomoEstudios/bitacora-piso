@@ -365,6 +365,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Material alerts strip: justo sobre la línea y=820, en área del trailer */
 .tvo-mat-tag{font-size:max(6px,1cqw);font-weight:800;padding:.25cqw .9cqw;border-radius:100px;white-space:nowrap;letter-spacing:.02em}
 .tvo-mat-received{background:rgba(39,174,96,.25);color:#4cd964;border:1px solid rgba(39,174,96,.5)}
+.tvo-mat-pending{background:rgba(200,50,50,.25);color:#ff6b6b;border:1px solid rgba(200,50,50,.5)}
 .tvo-mat-transit{background:rgba(41,128,185,.2);color:#5dade2;border:1px solid rgba(41,128,185,.4)}
 .tvo-mat-frontier{background:rgba(230,126,34,.2);color:#f0a14a;border:1px solid rgba(230,126,34,.4)}
 /* Bottom workers: y=880→1090/1099 */
@@ -3028,13 +3029,13 @@ function tvCard(u) {
     if (!matMap[e.matId] || e.ts > matMap[e.matId].ts) matMap[e.matId] = e;
   });
   const allActiveMats = Object.values(matMap)
-    .filter(e => ['received','frontier','transit'].includes(e.status) && e.ts > (u.matClearedAt || 0));
+    .filter(e => ['pending','requested','frontier','transit','received'].includes(e.status) && e.ts > (u.matClearedAt || 0));
   const pendingMats = allActiveMats.filter(e => e.status !== 'received')
-    .sort((a,b) => ({frontier:0,transit:1}[a.status]||2) - ({frontier:0,transit:1}[b.status]||2));
+    .sort((a,b) => ({pending:0,requested:1,frontier:2,transit:3}[a.status]||4) - ({pending:0,requested:1,frontier:2,transit:3}[b.status]||4));
   const receivedMats = allActiveMats.filter(e => e.status === 'received');
   function _matTag(e) {
-    const cls = e.status==='received'?'tvo-mat-received':e.status==='frontier'?'tvo-mat-frontier':'tvo-mat-transit';
-    const icon = e.status==='received'?'📦':e.status==='frontier'?'🟠':'🔵';
+    const cls = e.status==='received'?'tvo-mat-received':e.status==='frontier'?'tvo-mat-frontier':e.status==='pending'?'tvo-mat-pending':'tvo-mat-transit';
+    const icon = e.status==='received'?'📦':e.status==='frontier'?'🟠':e.status==='pending'?'🔴':'🔵';
     return `<div class="tvo-mat-tag ${cls}">${icon} ${e.matName}</div>`;
   }
   const topRow = pendingMats.map(_matTag).join('');
