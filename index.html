@@ -354,8 +354,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tv-card.tc-hold{border-color:var(--andon-hold)}
 /* Split body */
 .tv-split{display:grid;grid-template-columns:48% 52%;flex:1;min-height:0}
-.tv-bp-col{padding:12px 8px 8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
-.tv-bp-prog{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:0 2px;font-weight:600}
+.tv-bp-col{padding:0;border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tv-bp-svg-wrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;padding:10px 10px 6px}
+.tv-bp-svg-wrap svg{width:100%;height:auto;display:block}
+/* overlay strips sobre el SVG */
+.tv-svg-top{position:absolute;top:0;left:0;right:0;padding:6px 10px 5px;background:linear-gradient(to bottom,rgba(10,9,8,.85) 0%,transparent 100%);pointer-events:none}
+.tv-svg-top-num{font-size:15px;font-weight:900;line-height:1;letter-spacing:-.3px;color:#fff}
+.tv-svg-top-model{font-size:9px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.3px;margin-top:1px}
+.tv-svg-bot{position:absolute;bottom:0;left:0;right:0;padding:5px 10px 6px;background:linear-gradient(to top,rgba(10,9,8,.85) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.tv-svg-date{font-size:9px;font-weight:700;line-height:1.3}
+.tv-bp-prog{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:2px 10px 6px;font-weight:600;flex-shrink:0}
 .tv-info-col{padding:14px 14px 10px 16px;display:flex;flex-direction:column;overflow:hidden}
 .tv-unit-num{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.5px}
 .tv-model-lbl{font-size:11px;color:var(--text2);margin-top:4px;margin-bottom:10px;letter-spacing:.2px}
@@ -2747,19 +2755,39 @@ function tvCard(u) {
       </div>`
     : `<div class="tv-delivery"><span style="color:var(--text3);font-size:9px">Sin fecha</span></div>`;
 
+  const wkrs = parseWorkers(u.workers);
+  const dateOverlay = delivery
+    ? `<div class="tv-svg-date" style="color:${delivery.urgencyColor}">📅 ${delivery.fmt}<span style="font-size:8px;display:block;opacity:.8">${delivery.urgency}</span></div>`
+    : `<div class="tv-svg-date" style="color:rgba(255,255,255,.3)">Sin fecha</div>`;
+  const workersOverlay = wkrs.length
+    ? `<div style="display:flex;gap:3px">${workerAvatarsHtml(u.workers, 20)}</div>`
+    : '';
+
   return `
   <div class="tv-card tc-${andon}" onclick="openUnit('${u.id}');clearInterval(tvClockInterval)">
     <div class="tv-split">
-      <!-- LEFT: Blueprint -->
+      <!-- LEFT: Blueprint con overlay -->
       <div class="tv-bp-col">
-        ${trailerSVG(u)}
+        <div class="tv-bp-svg-wrap">
+          ${trailerSVG(u)}
+          <!-- overlay top: número + modelo -->
+          <div class="tv-svg-top">
+            <div class="tv-svg-top-num">${u.num}</div>
+            <div class="tv-svg-top-model">${modelObj.name} · ${u.type==='rep'?'REP':'PROD'}${u.vin ? ` · ${u.vin}` : ''}</div>
+          </div>
+          <!-- overlay bottom: fecha + trabajadores -->
+          <div class="tv-svg-bot">
+            ${dateOverlay}
+            ${workersOverlay}
+          </div>
+        </div>
         <div class="tv-bp-prog">
           <span>${stages[u.stageIdx] || 'Completado'}</span>
           <span>${pct}%</span>
         </div>
-        ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);margin-top:2px">⚠ Material pendiente</div>` : ''}
+        ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);padding:0 10px 6px">⚠ Material pendiente</div>` : ''}
       </div>
-      <!-- RIGHT: Info + Checklist -->
+      <!-- RIGHT: Days + Checklist -->
       <div class="tv-info-col">
         <div class="tv-unit-num">${u.num}</div>
         <div class="tv-model-lbl">${modelObj.name} · ${u.type==='rep'?'Rep.':'Prod.'} · ${modelObj.sub||''}</div>
