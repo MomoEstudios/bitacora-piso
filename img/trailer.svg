@@ -128,7 +128,7 @@
 <g id="zone-pintura">
 <circle id="pintura point" cx="1272.5" cy="712.5" r="18.5" fill="#D9D9D9"/>
 </g>
-<g id="olverlay-pintura">
+<g id="overlay-pintura">
 <circle id="pintura point_2" cx="1272.5" cy="712.5" r="18.5" fill="#44FF00"/>
 </g>
 <g id="zone-chasis">
