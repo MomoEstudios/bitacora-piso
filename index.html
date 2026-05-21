@@ -371,8 +371,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-date-big{font-size:max(10px,3.2cqw);font-weight:900;color:#fff;line-height:1;letter-spacing:-.02em}
 .tvo-date-remaining{font-size:max(6px,1.1cqw);margin-top:.3cqw;color:rgba(255,255,255,.5)}
 /* Bottom status: x=1317→1929/1947 */
-.tvo-status{top:79%;left:67.6%;right:.9%;bottom:.5%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.8cqw}
-.tvo-status-pill{border-radius:100px;padding:.6cqw 2.5cqw;font-size:max(8px,1.8cqw);font-weight:900;letter-spacing:.04em;display:flex;align-items:center;gap:.6cqw;white-space:nowrap}
+.tvo-status{top:75%;left:67.6%;right:.9%;bottom:.5%;display:flex;justify-content:center;align-items:center;border-radius:10px;border:2px solid transparent}
+.tvo-status-inner{font-size:max(9px,2cqw);font-weight:900;letter-spacing:.06em;display:flex;align-items:center;gap:.8cqw;white-space:nowrap}
 /* keep w-av for unit detail / dashboard */
 .w-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px}
 </style>
@@ -2802,9 +2802,9 @@ function tvCard(u) {
           : `<span style="font-size:max(8px,1.2cqw);color:rgba(255,255,255,.25)">Sin fecha</span>`}
       </div>
 
-      <!-- BOTTOM-RIGHT: Andon status -->
-      <div class="tvo tvo-status">
-        <div class="tvo-status-pill" style="background:${ac.bg};border:1.5px solid ${ac.border};color:${ac.color}">
+      <!-- BOTTOM-RIGHT: Andon status (recuadro coloreado) -->
+      <div class="tvo tvo-status" style="background:${ac.bg};border-color:${ac.border}">
+        <div class="tvo-status-inner" style="color:${ac.color}">
           ${andonInfo.icon} ${andonInfo.txt.toUpperCase()}
         </div>
       </div>
@@ -3002,6 +3002,13 @@ function trailerSVGFromDoc(unit) {
       el.style.opacity = '0.08';
     }
   });
+
+  // Colorear overlay-estadoactual siempre con el color del andon
+  const estadoEl = clone.querySelector('[id="overlay-estadoactual"]');
+  if (estadoEl) {
+    estadoEl.style.opacity = '1';
+    applyColor(estadoEl, currColor);
+  }
 
   // Alert badge
   const hasAlert = unit.entries.some(e => e.type === 'material' && e.status === 'pending');
