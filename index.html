@@ -836,15 +836,16 @@ const MODELS = [
 ];
 
 const STAGES_PROD = [
-  'Chasis / Estructura',
-  'Soportes y refuerzos',
-  'Ejes y suspensión',
-  'Piso y rampas',
-  'Sistema hidráulico',
-  'Cableado y luces',
-  'Pintura y acabados',
-  'Ensamble final',
-  'QA / Inspección',
+  'Chasis',
+  'Piso',
+  'Frente',
+  'Ejes',
+  'Ruedas',
+  'Winch',
+  'Eléctrico',
+  'Primer',
+  'Pintura',
+  'Inspección',
   'Entrega',
 ];
 
@@ -855,13 +856,13 @@ const STAGES_REP = [
   'Montaje',
   'Prueba y revisión',
   'Limpieza y acabado',
-  'QA / Inspección',
+  'Inspección',
   'Entrega',
 ];
 
-const STAGE_SHORT_PROD  = ['Chasis','Soportes','Ejes','Piso','Hidráulico','Eléctrico','Pintura','Ensamble','Inspección','Entrega'];
+const STAGE_SHORT_PROD  = ['Chasis','Piso','Frente','Ejes','Ruedas','Winch','Eléctrico','Primer','Pintura','Inspección','Entrega'];
 const STAGE_SHORT_REP   = ['Diagnóstico','Desmontaje','Reparación','Montaje','Prueba','Acabado','Inspección','Entrega'];
-const STAGE_ICONS_PROD  = ['🔩','🔧','⚙️','📐','💧','⚡','🎨','🔨','✅','🚚'];
+const STAGE_ICONS_PROD  = ['🔩','📐','🏗️','⚙️','🛞','🔧','⚡','🎨','🖌️','✅','🚚'];
 const STAGE_ICONS_REP   = ['🔍','🔧','⚙️','🔩','✔️','🎨','✅','🚚'];
 
 const ANDON_LABELS = {
@@ -1298,7 +1299,7 @@ function renderUnitFeed() {
   const u = getUnit(activeUnitId);
   const stages = getStages(u);
   const pct = stagePct(u);
-  const isQA       = stages[u.stageIdx] === 'QA / Inspección';
+  const isQA       = stages[u.stageIdx] === 'Inspección';
   const isEntrega  = stages[u.stageIdx] === 'Entrega';
   const isArchived = !!u.closedAt;
 
@@ -2934,21 +2935,22 @@ async function loadTrailerSVG() {
   } catch(e) { _trailerSVGDoc = null; }
 }
 
-// Zone → stages that "complete" it — IDs match new SVG overlay groups
+// Zone → stages 1:1 con labels del SVG
+// STAGES_PROD: 0=Chasis 1=Piso 2=Frente 3=Ejes 4=Ruedas 5=Winch 6=Eléctrico 7=Primer 8=Pintura 9=Inspección 10=Entrega
 const ZONE_STAGE_MAP_PROD = {
-  'zone-chasis':     [0, 1],
-  'zone-frente':     [0, 1],
-  'zone-patin':      [0, 1],
-  'zone-ejes':       [2],
-  'zone-llantas':    [2],
-  'zone-piso':       [3],
-  'zone-centro':     [3],
-  'zone-winch':      [4],
-  'zone-electrico':  [5],
-  'zone-luces':      [5],
-  'zone-primer':     [6],
-  'zone-pintura':    [6],
-  'zone-inspeccion': [8],
+  'zone-chasis':     [0],
+  'zone-patin':      [0],
+  'zone-piso':       [1],
+  'zone-centro':     [1],
+  'zone-frente':     [2],
+  'zone-ejes':       [3],
+  'zone-llantas':    [4],
+  'zone-winch':      [5],
+  'zone-electrico':  [6],
+  'zone-luces':      [6],
+  'zone-primer':     [7],
+  'zone-pintura':    [8],
+  'zone-inspeccion': [9],
 };
 const ZONE_STAGE_MAP_REP = {
   'zone-chasis':     [0],
