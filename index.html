@@ -2991,14 +2991,19 @@ function tvCard(u) {
   }).join('');
 
   // Worker avatars with name
+  const _ds = getDoubleAssigned();
   const workersHtml = wkrs.length
     ? wkrs.slice(0,4).map(name => {
         const parts = name.trim().split(/\s+/);
         const init  = parts.length > 1 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
         const color = getEmpColor(name);
         const short = parts.length > 1 ? `${parts[0][0]}. ${parts[parts.length-1]}` : parts[0];
+        const isDouble = _ds.has(name.toLowerCase().trim());
         return `<div class="tvo-wkr-item">
-          <div class="tvo-wkr-av" style="background:${color}">${init}</div>
+          <div style="position:relative;display:inline-flex">
+            <div class="tvo-wkr-av" style="background:${color}">${init}</div>
+            ${isDouble ? `<span style="position:absolute;top:-3px;right:-3px;font-size:max(7px,1.3cqw);line-height:1;background:#0a0b0f;border-radius:50%;padding:1px">⚡</span>` : ''}
+          </div>
           <div class="tvo-wkr-name">${short}</div>
         </div>`;
       }).join('')
