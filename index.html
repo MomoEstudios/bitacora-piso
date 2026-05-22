@@ -1374,9 +1374,12 @@ function unitCard(u) {
     <div class="uc-head">
       <div class="unit-tag">${u.type==='rep'?'🔧':'🏗️'}</div>
       <div class="uc-info">
-        <h2>${u.linea ? `<span class="linea-badge">${u.linea}</span>` : ''}${modelObj.name} <span style="font-weight:500;color:var(--text2)">${u.num}</span></h2>
-        <div class="uc-sub">${u.pedido ? `<span class="pedido-chip">Pedido ${u.pedido}</span> · ` : ''}${stageLabel(u)}</div>
-        ${u.vin ? `<div><span class="vin-chip">${u.vin}</span></div>` : ''}
+        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
+          ${u.linea ? `<span class="linea-badge">${u.linea}</span>` : ''}
+          <h2 style="margin:0">${modelObj.name}</h2>
+        </div>
+        <div class="uc-sub" style="margin-top:2px">${modelObj.sub||''}</div>
+        <div class="uc-sub" style="margin-top:1px">▶ ${stageLabel(u)}</div>
         <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
           ${dis !== null
             ? `<span class="days-badge ${stageWarn?'db-warn':''}" title="Días en etapa actual">${stageWarn?'⚠':'⏱'} ${dis}d etapa</span>`
@@ -1384,7 +1387,10 @@ function unitCard(u) {
           <span class="days-badge" title="Días en piso">📅 ${dip}d piso</span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0">
+        <div style="font-size:16px;font-weight:900;color:#fff;letter-spacing:-.3px;text-align:right">${u.num}</div>
+        ${u.pedido ? `<div style="font-size:10px;color:var(--text3);font-weight:600;text-align:right">${u.pedido}</div>` : ''}
+        ${u.vin ? `<span class="vin-chip" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${u.vin}</span>` : ''}
         <span class="uc-badge ${badgeCls}">${badgeTxt}</span>
         <span style="font-size:9px;font-weight:700;color:${andonColor}">${andonInfo.icon} ${andonInfo.txt}</span>
       </div>
@@ -3531,14 +3537,21 @@ function dashboardCard(u) {
   return `
   <div class="db-card" style="border-color:var(--andon-${andon});border-left-width:10px" onclick="openUnit('${u.id}')">
     <!-- HEADER -->
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px 8px;border-bottom:1px solid var(--border)">
-      <div style="flex:1">
-        <div style="font-size:18px;font-weight:900;line-height:1;letter-spacing:-.3px">${u.num}</div>
-        <div style="font-size:10px;color:var(--text2);margin-top:2px">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'} · ${modelObj.sub||''}</div>
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px 8px;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          ${u.linea ? `<span class="linea-badge">${u.linea}</span>` : ''}
+          <span style="font-size:15px;font-weight:900;color:#fff;line-height:1">${modelObj.name}</span>
+          <span style="font-size:10px;color:var(--text3);font-weight:600">${u.type==='rep'?'Rep':'Prod'}</span>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">${modelObj.sub||''}</div>
       </div>
-      <div style="text-align:right">
-        <div style="padding:4px 10px;border-radius:8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:${ac.bg};border:1px solid ${ac.border};color:${ac.color}">${andonInfo.icon} ${andonInfo.txt}</div>
-        ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);margin-top:4px">⚠ Material</div>` : ''}
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:17px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.3px">${u.num}</div>
+        ${u.pedido ? `<div style="font-size:9px;color:var(--text3);font-weight:600;margin-top:2px">${u.pedido}</div>` : ''}
+        ${u.vin ? `<div style="font-family:monospace;font-size:8px;color:var(--text3);margin-top:2px;max-width:100px;overflow:hidden;text-overflow:ellipsis">${u.vin}</div>` : ''}
+        <div style="padding:3px 8px;border-radius:6px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:${ac.bg};border:1px solid ${ac.border};color:${ac.color};margin-top:4px;display:inline-block">${andonInfo.icon} ${andonInfo.txt}</div>
+        ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);margin-top:3px">⚠ Material</div>` : ''}
       </div>
     </div>
     ${(u.pinNotes?.length) ? u.pinNotes.map(n => `<div style="padding:5px 14px;background:rgba(232,184,0,.09);border-bottom:1px solid rgba(232,184,0,.15);display:flex;align-items:flex-start;gap:6px"><span style="font-size:12px;flex-shrink:0;margin-top:1px">📢</span><span style="font-size:10px;font-weight:700;color:rgba(232,184,0,.9);line-height:1.4;white-space:pre-line;word-break:break-word;flex:1">${n.text}</span></div>`).join('') : ''}
