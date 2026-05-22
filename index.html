@@ -670,8 +670,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div class="modal-handle"></div>
     <h2>📢 Aviso para Administración</h2>
     <textarea class="modal-input" id="aviso-text" rows="4" placeholder="Ej: Hoy viene el cliente · Revisar pintura · Cuidar limpieza..."></textarea>
-    <button class="modal-btn primary" onclick="savePinNote()">Publicar Aviso</button>
-    <button class="modal-btn" onclick="clearPinNote()" style="background:rgba(192,57,43,.1);color:#e06b5f;border:1px solid rgba(192,57,43,.25)">🗑 Limpiar Aviso</button>
+    <button class="modal-btn primary" onclick="savePinNote()">Agregar Aviso</button>
     <button class="modal-btn cancel" onclick="closeModal('modal-aviso')">Cancelar</button>
   </div>
 </div>
@@ -1080,7 +1079,7 @@ async function loadFromDB() {
         stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
         closedAt: u.closed_at ? new Date(u.closed_at).getTime() : null,
         matClearedAt: u.mat_cleared_at ? new Date(u.mat_cleared_at).getTime() : null,
-        pinNote: u.pin_note || null,
+        pinNotes: parsePinNotes(u.pin_note),
         entries: (dbEntries || [])
           .filter(e => e.unit_id === u.id)
           .map(e => ({
@@ -1132,7 +1131,7 @@ async function saveUnit(u) {
       stage_started_at: u.stageStartedAt ? new Date(u.stageStartedAt).toISOString() : null,
       closed_at: u.closedAt ? new Date(u.closedAt).toISOString() : null,
       mat_cleared_at: u.matClearedAt ? new Date(u.matClearedAt).toISOString() : null,
-      pin_note: u.pinNote || null,
+      pin_note: u.pinNotes?.length ? JSON.stringify(u.pinNotes) : null,
     };
     const existing = await getSupaUnitId(u.id);
     if (existing) {
@@ -1221,6 +1220,18 @@ function showToast(msg) {
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
+
+function parsePinNotes(raw) {
+  if (!raw) return [];
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p)) return p;
+    if (typeof p === 'string' && p) return [{id: 'legacy', text: p}];
+  } catch(e) {
+    if (typeof raw === 'string' && raw) return [{id: 'legacy', text: raw}];
+  }
+  return [];
+}
 
 function uid() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
@@ -1377,7 +1388,7 @@ function renderUnitFeed() {
   document.getElementById('btn-listo').style.display    = isQA && !isArchived ? 'flex' : 'none';
   document.getElementById('btn-entregar').style.display = isEntrega && !isArchived ? 'flex' : 'none';
   const btnAviso = document.getElementById('btn-aviso');
-  if (btnAviso) btnAviso.classList.toggle('has-note', !!u.pinNote);
+  if (btnAviso) btnAviso.classList.toggle('has-note', (u.pinNotes?.length || 0) > 0);
 
   const dots = stages.map((s,i) =>
     `<div class="stage-dot ${i < u.stageIdx ? 'done' : i === u.stageIdx ? 'current' : ''}"></div>`
@@ -1386,16 +1397,19 @@ function renderUnitFeed() {
   const andon = u.andonStatus || 'normal';
   let html = '';
 
-  // Aviso admin
-  if (u.pinNote) {
-    html += `<div style="margin:10px 14px 0;padding:10px 14px;background:rgba(232,184,0,.09);border:1px solid rgba(232,184,0,.25);border-radius:12px;display:flex;align-items:flex-start;gap:10px">
-      <span style="font-size:20px;line-height:1">📢</span>
-      <div style="flex:1">
-        <div style="font-size:10px;font-weight:800;color:rgba(232,184,0,.6);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Aviso para Administración</div>
-        <div style="font-size:13px;font-weight:600;color:rgba(232,184,0,.95);line-height:1.4;white-space:pre-line;word-break:break-word">${u.pinNote}</div>
-      </div>
-      <button onclick="clearPinNote()" style="background:none;border:none;color:rgba(232,184,0,.4);font-size:16px;cursor:pointer;padding:0;line-height:1" title="Limpiar aviso">✕</button>
-    </div>`;
+  // Avisos admin
+  if (u.pinNotes?.length) {
+    html += `<div style="margin:10px 14px 0;display:flex;flex-direction:column;gap:6px">` +
+      u.pinNotes.map(n => `
+        <div style="padding:10px 12px;background:rgba(232,184,0,.09);border:1px solid rgba(232,184,0,.25);border-radius:12px;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:18px;line-height:1;flex-shrink:0">📢</span>
+          <div style="flex:1">
+            <div style="font-size:9px;font-weight:800;color:rgba(232,184,0,.5);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Aviso Admin</div>
+            <div style="font-size:13px;font-weight:600;color:rgba(232,184,0,.95);line-height:1.4;white-space:pre-line;word-break:break-word">${n.text}</div>
+          </div>
+          <button onclick="deletePinNote('${n.id}')" style="background:none;border:none;color:rgba(232,184,0,.35);font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0" title="Eliminar aviso">✕</button>
+        </div>`).join('') +
+    `</div>`;
   }
 
   // Archived banner
@@ -1596,33 +1610,31 @@ async function saveNote() {
 
 // AVISO
 function openPinNoteModal() {
-  const u = getUnit(activeUnitId);
-  document.getElementById('aviso-text').value = u?.pinNote || '';
+  document.getElementById('aviso-text').value = '';
   openModal('modal-aviso');
   setTimeout(() => document.getElementById('aviso-text').focus(), 300);
 }
 async function savePinNote() {
   const txt = document.getElementById('aviso-text').value.trim();
+  if (!txt) return;
   const u = getUnit(activeUnitId);
   if (!u) return;
-  u.pinNote = txt || null;
+  if (!u.pinNotes) u.pinNotes = [];
+  u.pinNotes.push({id: uid(), text: txt});
   closeModal('modal-aviso');
   await saveUnit(u);
   renderUnitFeed(); renderDashboard();
-  const btn = document.getElementById('btn-aviso');
-  if (btn) btn.classList.toggle('has-note', !!u.pinNote);
-  showToast(u.pinNote ? 'Aviso publicado' : 'Aviso limpiado');
+  document.getElementById('btn-aviso')?.classList.add('has-note');
+  showToast('Aviso agregado');
 }
-async function clearPinNote() {
+async function deletePinNote(noteId) {
   const u = getUnit(activeUnitId);
   if (!u) return;
-  u.pinNote = null;
-  closeModal('modal-aviso');
+  u.pinNotes = (u.pinNotes || []).filter(n => n.id !== noteId);
   await saveUnit(u);
   renderUnitFeed(); renderDashboard();
-  const btn = document.getElementById('btn-aviso');
-  if (btn) btn.classList.remove('has-note');
-  showToast('Aviso limpiado');
+  document.getElementById('btn-aviso')?.classList.toggle('has-note', u.pinNotes.length > 0);
+  showToast('Aviso eliminado');
 }
 
 // MATERIAL
@@ -3322,7 +3334,7 @@ function dashboardCard(u) {
         ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);margin-top:4px">⚠ Material</div>` : ''}
       </div>
     </div>
-    ${u.pinNote ? `<div style="padding:6px 14px;background:rgba(232,184,0,.09);border-bottom:1px solid rgba(232,184,0,.2);display:flex;align-items:flex-start;gap:6px"><span style="font-size:13px;flex-shrink:0;margin-top:1px">📢</span><span style="font-size:10px;font-weight:700;color:rgba(232,184,0,.9);line-height:1.4;white-space:pre-line;word-break:break-word;flex:1">${u.pinNote}</span></div>` : ''}
+    ${(u.pinNotes?.length) ? u.pinNotes.map(n => `<div style="padding:5px 14px;background:rgba(232,184,0,.09);border-bottom:1px solid rgba(232,184,0,.15);display:flex;align-items:flex-start;gap:6px"><span style="font-size:12px;flex-shrink:0;margin-top:1px">📢</span><span style="font-size:10px;font-weight:700;color:rgba(232,184,0,.9);line-height:1.4;white-space:pre-line;word-break:break-word;flex:1">${n.text}</span></div>`).join('') : ''}
     <!-- BODY: Blueprint | Etapas | Material -->
     <div style="display:grid;grid-template-columns:50% 28% 22%;flex:1">
       <div style="padding:10px 6px 8px 10px;border-right:1px solid var(--border)">
