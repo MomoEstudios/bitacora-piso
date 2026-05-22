@@ -33,6 +33,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .unit-card{margin:12px 14px 0;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;cursor:pointer;active:scale(.98)}
 .unit-card:active{opacity:.85}
 .unit-card .uc-head{padding:14px 16px 10px;display:flex;align-items:flex-start;gap:12px}
+.linea-badge{display:inline-block;background:rgba(232,184,0,.18);border:1px solid rgba(232,184,0,.4);color:var(--gold);font-size:10px;font-weight:900;padding:1px 7px;border-radius:100px;letter-spacing:.04em;margin-right:5px;vertical-align:middle}
+.pedido-chip{font-size:11px;color:var(--text3);font-weight:600}
+.vin-chip{font-family:monospace;font-size:10px;color:var(--text3);letter-spacing:.5px;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:3px}
+.linea-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.linea-opt{padding:7px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s,color .12s}
+.linea-opt.selected{background:rgba(232,184,0,.15);border-color:rgba(232,184,0,.5);color:var(--gold)}
 .unit-tag{min-width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--surface2)}
 .uc-info{flex:1}
 .uc-info h2{font-size:15px;font-weight:700}
@@ -753,6 +759,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div class="model-grid" id="model-grid"></div>
     </div>
     <div class="form-group">
+      <label>Línea de producción <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+      <div class="linea-opts" id="linea-opts">
+        <div class="linea-opt" id="lopt-L1" onclick="selectLinea('L1')">L1</div>
+        <div class="linea-opt" id="lopt-L2" onclick="selectLinea('L2')">L2</div>
+        <div class="linea-opt" id="lopt-L3" onclick="selectLinea('L3')">L3</div>
+        <div class="linea-opt" id="lopt-L4" onclick="selectLinea('L4')">L4</div>
+        <div class="linea-opt" id="lopt-L5" onclick="selectLinea('L5')">L5</div>
+        <div class="linea-opt" id="lopt-L6" onclick="selectLinea('L6')">L6</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label># de Pedido / Orden <span style="color:var(--text3);font-weight:400">(opcional)</span></label>
+      <input class="modal-input" id="new-pedido" placeholder="Ej: PED-2026-001, OC-442..." style="display:block">
+    </div>
+    <div class="form-group">
       <label>Número de unidad / folio</label>
       <input class="modal-input" id="unit-num" placeholder="Ej: #007, REM-2024-05..." style="display:block">
     </div>
@@ -971,6 +992,7 @@ let selectedStatus = 'pending';
 let selectedMat = null;
 let selectedModel = null;
 let selectedType = 'prod';
+let selectedLinea = null;
 let updatingEntryId = null;
 let updateStatus = 'pending';
 
@@ -1081,6 +1103,8 @@ async function loadFromDB() {
         id: u.local_id || String(u.id),
         type: u.type, model: u.model, num: u.num,
         vin: u.vin || null,
+        linea: u.linea || null,
+        pedido: u.pedido || null,
         stageIdx: u.stage_idx || 0,
         andonStatus: u.andon_status || 'normal',
         deliveryDate: u.delivery_date || u.rep_deadline || null,
@@ -1133,6 +1157,8 @@ async function saveUnit(u) {
     const row = {
       local_id: u.id, type: u.type, model: u.model, num: u.num,
       vin: u.vin || null,
+      linea: u.linea || null,
+      pedido: u.pedido || null,
       stage_idx: u.stageIdx,
       andon_status: u.andonStatus || 'normal',
       delivery_date: u.deliveryDate || u.repDeadline || null,
@@ -1348,8 +1374,9 @@ function unitCard(u) {
     <div class="uc-head">
       <div class="unit-tag">${u.type==='rep'?'🔧':'🏗️'}</div>
       <div class="uc-info">
-        <h2>${modelObj.name} ${u.num}</h2>
-        <div class="uc-sub">${modelObj.sub||''} · ${stageLabel(u)}${u.vin ? ` · <span style="font-family:monospace;letter-spacing:.3px">${u.vin}</span>` : ''}</div>
+        <h2>${u.linea ? `<span class="linea-badge">${u.linea}</span>` : ''}${modelObj.name} <span style="font-weight:500;color:var(--text2)">${u.num}</span></h2>
+        <div class="uc-sub">${u.pedido ? `<span class="pedido-chip">Pedido ${u.pedido}</span> · ` : ''}${stageLabel(u)}</div>
+        ${u.vin ? `<div><span class="vin-chip">${u.vin}</span></div>` : ''}
         <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
           ${dis !== null
             ? `<span class="days-badge ${stageWarn?'db-warn':''}" title="Días en etapa actual">${stageWarn?'⚠':'⏱'} ${dis}d etapa</span>`
@@ -1842,13 +1869,15 @@ async function saveMatUpdate() {
 
 // ADD UNIT
 function openAddUnit() {
-  selectedModel = null; selectedType = 'prod';
+  selectedModel = null; selectedType = 'prod'; selectedLinea = null;
   document.getElementById('unit-num').value = '';
   document.getElementById('new-vin').value = '';
+  document.getElementById('new-pedido').value = '';
   document.getElementById('new-delivery-date').value = '';
   document.getElementById('new-workers').value = '';
   document.getElementById('rep-reason').value = '';
   document.getElementById('rep-reason-group').style.display = 'none';
+  document.querySelectorAll('.linea-opt').forEach(el => el.classList.remove('selected'));
   document.getElementById('topt-prod').classList.add('selected');
   document.getElementById('topt-rep').classList.remove('selected');
   document.getElementById('model-grid').innerHTML = MODELS.map(m =>
@@ -1858,6 +1887,11 @@ function openAddUnit() {
     </div>`
   ).join('');
   openModal('modal-addunit');
+}
+function selectLinea(l) {
+  selectedLinea = (selectedLinea === l) ? null : l;
+  document.querySelectorAll('.linea-opt').forEach(el => el.classList.remove('selected'));
+  if (selectedLinea) document.getElementById(`lopt-${l}`)?.classList.add('selected');
 }
 function selectType(t) {
   selectedType = t;
@@ -1877,9 +1911,11 @@ async function saveNewUnit() {
   const deliveryDate = document.getElementById('new-delivery-date').value || null;
   const workers = document.getElementById('new-workers').value.trim() || null;
   const vin = document.getElementById('new-vin').value.trim().toUpperCase() || null;
+  const pedido = document.getElementById('new-pedido').value.trim() || null;
   const u = {
     id: uid(), type: selectedType, model: selectedModel, num,
-    vin, stageIdx: 0, andonStatus: 'normal',
+    vin, pedido, linea: selectedLinea,
+    stageIdx: 0, andonStatus: 'normal',
     deliveryDate, workers,
     createdAt: Date.now(), stageStartedAt: Date.now(), entries: []
   };
@@ -2741,7 +2777,7 @@ function openExportModal() {
 function downloadGeneralReport() {
   const BOM = '﻿';
   const all = [...units].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
-  let csv = BOM + csvRow(['Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Trabajadores','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados','VIN']);
+  let csv = BOM + csvRow(['Línea','Pedido','Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Trabajadores','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados','VIN']);
   all.forEach(u => {
     const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
     const pct = stagePct(u);
@@ -2756,7 +2792,7 @@ function downloadGeneralReport() {
     const dias = cDate && u.closedAt ? Math.round((u.closedAt - cDate.getTime()) / 86400000) :
                  cDate ? Math.round((Date.now() - cDate.getTime()) / 86400000) : '';
     csv += csvRow([
-      u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
+      u.linea||'', u.pedido||'', u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
       isArch?'Entregado':stageLabel(u), pct+'%', ec.stage,
       wkrs, cFmt, dFmt, dias, ec.photo, ec.note, ec.material, u.vin||''
     ]);
@@ -2776,7 +2812,7 @@ function downloadPersonaReport(name) {
   csv += csvRow([`Generado:`, new Date().toLocaleString('es-MX')]);
   csv += csvRow([`Total unidades:`, wu.length, `Activas:`, active.length, `Entregadas:`, closed.length]);
   csv += '\n';
-  csv += csvRow(['Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados']);
+  csv += csvRow(['Línea','Pedido','Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados','VIN']);
   wu.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(u => {
     const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
     const isArch = !!u.closedAt;
@@ -2788,9 +2824,9 @@ function downloadPersonaReport(name) {
     const dias = cDate && u.closedAt ? Math.round((u.closedAt-cDate.getTime())/86400000) :
                  cDate ? Math.round((Date.now()-cDate.getTime())/86400000) : '';
     csv += csvRow([
-      u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
+      u.linea||'', u.pedido||'', u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
       isArch?'Entregado':stageLabel(u), stagePct(u)+'%', ec.stage,
-      cFmt, dFmt, dias, ec.photo, ec.note, ec.material
+      cFmt, dFmt, dias, ec.photo, ec.note, ec.material, u.vin||''
     ]);
   });
   closeModal('modal-export-report');
