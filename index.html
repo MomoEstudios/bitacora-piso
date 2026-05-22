@@ -1135,10 +1135,12 @@ async function saveUnit(u) {
     };
     const existing = await getSupaUnitId(u.id);
     if (existing) {
-      await db.from('units').update(row).eq('local_id', u.id);
+      const { error } = await db.from('units').update(row).eq('local_id', u.id);
+      if (error) { console.error('saveUnit update:', error); showToast('⚠ Error al guardar: ' + error.message); }
     } else {
-      const { data } = await db.from('units').insert(row).select('id').single();
-      if (data) supaIdCache[u.id] = data.id;
+      const { data, error } = await db.from('units').insert(row).select('id').single();
+      if (error) { console.error('saveUnit insert:', error); showToast('⚠ Error al guardar: ' + error.message); }
+      else if (data) supaIdCache[u.id] = data.id;
     }
   } catch(err) { console.error('saveUnit:', err); }
 }
