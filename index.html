@@ -339,9 +339,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #tv-grid{display:flex;flex-direction:column;will-change:transform;transition:transform 1.4s ease-in-out}
 .tv-slide{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;flex-shrink:0;box-sizing:border-box;align-content:start}
 @media(max-width:719px){.tv-slide{grid-template-columns:1fr}}
-.tv-slide-dots{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:5;pointer-events:none}
-.tv-dot{width:5px;height:5px;border-radius:3px;background:rgba(255,255,255,.18);transition:height .35s ease,background .35s ease}
-.tv-dot.active{background:var(--gold);height:18px}
+.tv-slide-indicator{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:100px;padding:4px 14px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:.04em;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;transition:opacity .3s}
 /* TV card — borde izquierdo grueso como Andon, tarjeta grande */
 /* TV CARD — overlay layout (SVG 1947×1099 viewBox) */
 .tv-card{border-radius:14px;border:2px solid var(--border);border-left-width:8px;overflow:hidden;background:var(--surface);cursor:pointer;container-type:inline-size}
@@ -498,12 +496,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <h1 style="color:#fff">SG Trailers — Piso</h1>
       <div style="font-size:11px;color:var(--text3);margin-top:1px" id="tv-date"></div>
     </div>
+    <div id="tv-slide-indicator" class="tv-slide-indicator" style="display:none"></div>
     <div id="tv-clock" class="tv-clock">00:00</div>
     <div onclick="goHome()" class="tv-exit">✕ Salir</div>
   </div>
   <div class="tv-slideshow-wrap" id="tv-slideshow-wrap">
     <div id="tv-grid"></div>
-    <div class="tv-slide-dots" id="tv-slide-dots"></div>
   </div>
 </div>
 
@@ -2963,15 +2961,23 @@ function tvAdvanceSlide() {
     grid.style.transition = 'none';
     tvSlideIndex = 0;
     grid.style.transform = 'translateY(0)';
-    document.querySelectorAll('.tv-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+    updateTVIndicator();
     requestAnimationFrame(() => requestAnimationFrame(() => {
       grid.style.transition = 'transform 1.4s ease-in-out';
     }));
   } else {
     tvSlideIndex++;
     grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
-    document.querySelectorAll('.tv-dot').forEach((d, i) => d.classList.toggle('active', i === tvSlideIndex));
+    updateTVIndicator();
   }
+}
+
+function updateTVIndicator() {
+  const el = document.getElementById('tv-slide-indicator');
+  if (!el) return;
+  if (tvSlideTotal <= 1) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.textContent = `${tvSlideIndex + 1} / ${tvSlideTotal}`;
 }
 
 function updateTVClock() {
@@ -2984,15 +2990,14 @@ function updateTVClock() {
 function renderTV() {
   document.getElementById('tv-date').textContent = fmtDate(Date.now());
   const grid = document.getElementById('tv-grid');
-  const dotsEl = document.getElementById('tv-slide-dots');
   const active = units.filter(u => !u.closedAt).sort((a, b) => {
     const order = {stopped:0, warning:1, waiting:2, normal:3};
     return (order[a.andonStatus||'normal'] || 3) - (order[b.andonStatus||'normal'] || 3);
   });
   if (!active.length) {
     grid.innerHTML = `<div class="tv-slide"><div style="grid-column:1/-1;text-align:center;padding:60px;color:#555;font-size:18px">Sin unidades en piso</div></div>`;
-    dotsEl.innerHTML = '';
     tvSlideTotal = 1;
+    updateTVIndicator();
     return;
   }
   const perSlide = window.innerWidth >= 720 ? 2 : 1;
@@ -3001,13 +3006,11 @@ function renderTV() {
   tvSlideTotal = slides.length;
   tvSlideIndex = Math.min(tvSlideIndex, tvSlideTotal - 1);
 
-  // Render sin transición para no animar el re-render del sync
   grid.style.transition = 'none';
   grid.innerHTML = slides.map(group =>
     `<div class="tv-slide">${group.map(u => tvCard(u)).join('')}</div>`
   ).join('');
 
-  // Altura de cada slide = altura del contenedor
   const wrap = document.getElementById('tv-slideshow-wrap');
   tvSlideHeight = wrap ? wrap.clientHeight : window.innerHeight - 60;
   grid.querySelectorAll('.tv-slide').forEach(s => s.style.height = tvSlideHeight + 'px');
@@ -3017,14 +3020,7 @@ function renderTV() {
     grid.style.transition = 'transform 1.4s ease-in-out';
   }));
 
-  // Dots
-  if (tvSlideTotal > 1) {
-    dotsEl.innerHTML = Array.from({length: tvSlideTotal}, (_, i) =>
-      `<div class="tv-dot${i === tvSlideIndex ? ' active' : ''}"></div>`
-    ).join('');
-  } else {
-    dotsEl.innerHTML = '';
-  }
+  updateTVIndicator();
 }
 
 function tvCard(u) {
