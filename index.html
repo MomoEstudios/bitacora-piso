@@ -337,9 +337,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* TV slideshow */
 .tv-slideshow-wrap{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
 #tv-grid{display:flex;flex-direction:column;will-change:transform;transition:transform 1.4s ease-in-out}
-.tv-slide{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;flex-shrink:0;box-sizing:border-box;align-content:start}
+.tv-slide{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;flex-shrink:0;box-sizing:border-box;align-content:start}
 @media(max-width:719px){.tv-slide{grid-template-columns:1fr}}
-.tv-slide-indicator{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:100px;padding:4px 14px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:.04em;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;transition:opacity .3s}
+.tv-slide-indicator{background:rgba(232,184,0,.1);border:1px solid rgba(232,184,0,.35);border-radius:100px;padding:6px 20px;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;display:flex;align-items:baseline;gap:4px;transition:opacity .3s}
 /* TV card — borde izquierdo grueso como Andon, tarjeta grande */
 /* TV CARD — overlay layout (SVG 1947×1099 viewBox) */
 .tv-card{border-radius:14px;border:2px solid var(--border);border-left-width:8px;overflow:hidden;background:var(--surface);cursor:pointer;container-type:inline-size}
@@ -2937,9 +2937,11 @@ let tvAutoSlideInterval = null;
 let tvSlideIndex = 0;
 let tvSlideTotal = 0;
 let tvSlideHeight = 0;
+let tvSlideDir = 1;
 
 function openTV() {
   tvSlideIndex = 0;
+  tvSlideDir = 1;
   showScreen('screen-tv');
   clearInterval(tvClockInterval);
   updateTVClock();
@@ -2956,20 +2958,12 @@ function tvAdvanceSlide() {
   if (tvSlideTotal <= 1) return;
   const grid = document.getElementById('tv-grid');
   if (!grid || !tvSlideHeight) return;
-  if (tvSlideIndex >= tvSlideTotal - 1) {
-    // Ciclo: saltar a 0 sin animación
-    grid.style.transition = 'none';
-    tvSlideIndex = 0;
-    grid.style.transform = 'translateY(0)';
-    updateTVIndicator();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      grid.style.transition = 'transform 1.4s ease-in-out';
-    }));
-  } else {
-    tvSlideIndex++;
-    grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
-    updateTVIndicator();
-  }
+  const next = tvSlideIndex + tvSlideDir;
+  if (next >= tvSlideTotal)      { tvSlideDir = -1; tvSlideIndex = tvSlideTotal - 2; }
+  else if (next < 0)             { tvSlideDir =  1; tvSlideIndex = 1; }
+  else                           { tvSlideIndex = next; }
+  grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
+  updateTVIndicator();
 }
 
 function updateTVIndicator() {
@@ -2977,7 +2971,7 @@ function updateTVIndicator() {
   if (!el) return;
   if (tvSlideTotal <= 1) { el.style.display = 'none'; return; }
   el.style.display = '';
-  el.textContent = `${tvSlideIndex + 1} / ${tvSlideTotal}`;
+  el.innerHTML = `<span style="font-size:26px;font-weight:900;color:var(--gold);line-height:1">${tvSlideIndex + 1}</span><span style="font-size:13px;font-weight:600;color:rgba(232,184,0,.45);letter-spacing:.02em"> / ${tvSlideTotal}</span>`;
 }
 
 function updateTVClock() {
