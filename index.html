@@ -3589,7 +3589,7 @@ setInterval(async () => {
       stageStartedAt: u.stage_started_at ? new Date(u.stage_started_at).getTime() : new Date(u.created_at).getTime(),
       closedAt: u.closed_at ? new Date(u.closed_at).getTime() : null,
       matClearedAt: u.mat_cleared_at ? new Date(u.mat_cleared_at).getTime() : null,
-      pinNote: u.pin_note || null,
+      pinNotes: parsePinNotes(u.pin_note),
       entries: (dbEntries || [])
         .filter(e => e.unit_id === u.id)
         .map(e => ({
