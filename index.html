@@ -3413,17 +3413,22 @@ function tvCard(u) {
     <div class="tv-svg-wrap">
       ${trailerSVG(u)}
 
-      <!-- HEADER LEFT: TRÁILER [num] -->
+      <!-- HEADER LEFT: L# + Nombre modelo -->
       <div class="tvo tvo-hdr-left">
-        <div class="tvo-hdr-title">TRÁILER <span class="tvo-hdr-num">${u.num}</span></div>
+        <div class="tvo-hdr-title">${u.linea?`<span class="tvo-hdr-num">${u.linea}</span> `:``}${modelObj.name.toUpperCase()}</div>
+        <div style="font-size:max(6px,1.25cqw);color:rgba(255,255,255,.45);font-weight:600;letter-spacing:.04em;margin-top:.3cqw">${modelObj.sub||''}${u.type==='rep'?' · Rep':' · Prod'}</div>
       </div>
 
       <!-- HEADER CENTER: alertas de material -->
       ${matTagsHtml ? `<div class="tvo tvo-hdr-center">${matTagsHtml}</div>` : ''}
 
-      <!-- HEADER RIGHT: modelo + VIN -->
+      <!-- HEADER RIGHT: número de unidad + pedido/VIN -->
       <div class="tvo tvo-hdr-right">
-        <div class="tvo-hdr-sub">${modelObj.name} · ${u.type==='rep'?'Reparación':'Producción'}${u.vin?`<br><span style="font-family:monospace;letter-spacing:.5px;font-size:max(6px,1cqw)">${u.vin}</span>`:''}</div>
+        <div class="tvo-hdr-sub" style="text-align:right">
+          <span style="font-size:max(9px,2.2cqw);font-weight:900;color:#fff;letter-spacing:-.02em">${u.num}</span>
+          ${u.pedido ? `<br><span style="font-size:max(6px,1.1cqw);color:rgba(232,184,0,.8);font-weight:700">${u.pedido}</span>` : ''}
+          ${u.vin ? `<br><span style="font-family:monospace;letter-spacing:.5px;font-size:max(5px,.95cqw);color:rgba(255,255,255,.4)">${u.vin}</span>` : ''}
+        </div>
       </div>
 
       <!-- RIGHT: Stage panel -->
