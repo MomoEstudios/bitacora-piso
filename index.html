@@ -3241,8 +3241,8 @@ function dashboardCard(u) {
         ${hasAlert ? `<div style="font-size:9px;font-weight:700;color:var(--andon-stopped);margin-top:4px">⚠ Material</div>` : ''}
       </div>
     </div>
-    <!-- BODY: Blueprint + Checklist -->
-    <div style="display:grid;grid-template-columns:52% 48%;flex:1">
+    <!-- BODY: Blueprint | Etapas | Material -->
+    <div style="display:grid;grid-template-columns:50% 28% 22%;flex:1">
       <div style="padding:10px 6px 8px 10px;border-right:1px solid var(--border)">
         <div class="db-svg-wrap" style="background:transparent;padding:0">${trailerSVG(u)}</div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:5px;padding:0 2px">
@@ -3252,17 +3252,13 @@ function dashboardCard(u) {
           <div style="height:100%;background:${isDone?'var(--andon-normal)':'var(--gold)'};width:${pct}%;border-radius:3px"></div>
         </div>
       </div>
-      <div style="padding:8px 10px;overflow:hidden;display:flex;flex-direction:column;gap:0">
-        <!-- Etapas -->
-        <div style="flex:1;overflow:hidden;min-height:0">
-          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Etapas</div>
-          ${checklist}
-        </div>
-        <!-- Materiales -->
-        <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;flex-shrink:0">
-          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Material</div>
-          ${matHtml}
-        </div>
+      <div style="padding:8px 10px;overflow:hidden;border-right:1px solid var(--border)">
+        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Etapas</div>
+        ${checklist}
+      </div>
+      <div style="padding:8px 10px;overflow:hidden">
+        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Material</div>
+        ${matHtml}
       </div>
     </div>
     <!-- FOOTER -->
