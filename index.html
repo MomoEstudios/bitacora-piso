@@ -393,6 +393,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tvo-status-inner{font-size:max(9px,2cqw);font-weight:900;letter-spacing:.06em;color:#fff;white-space:nowrap}
 /* keep w-av for unit detail / dashboard */
 .w-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.3px}
+/* ── EXPORT MODAL ── */
+.exp-section{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--surface2)}
+.exp-section-title{font-weight:900;color:#fff;font-size:13px;margin-bottom:3px;letter-spacing:.02em}
+.exp-section-desc{font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.4}
+.exp-period-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:2px}
+.exp-period-btn{padding:9px 6px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center}
+.exp-period-btn:active{opacity:.7}
+.exp-persona-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.exp-persona-row:last-child{border-bottom:none}
+.exp-dl-btn{margin-left:auto;flex-shrink:0;padding:5px 12px;border-radius:100px;background:rgba(232,184,0,.12);border:1px solid rgba(232,184,0,.3);color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
 /* ── REPORTES ── */
 .rpt-tabs{display:flex;padding:10px 14px 0;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
 .rpt-tab{flex:1;padding:9px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:color .15s,border-color .15s}
@@ -533,7 +543,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="topbar">
     <div class="back-btn" onclick="goHome()">‹</div>
     <div style="flex:1"><h1>Reportes</h1></div>
-    <button onclick="downloadExcel()" style="background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);color:var(--gold);padding:7px 13px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⬇ Excel</button>
+    <button onclick="openExportModal()" style="background:rgba(232,184,0,.15);border:1px solid rgba(232,184,0,.35);color:var(--gold);padding:7px 13px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⬇ Excel</button>
   </div>
   <div class="rpt-tabs">
     <button class="rpt-tab active" id="rpt-tab-trailer"  onclick="setRptTab('trailer')">Tráiler</button>
@@ -2672,104 +2682,158 @@ function todayStr() {
   return new Date().toISOString().slice(0,10);
 }
 
-function downloadExcel() {
-  const BOM = '﻿';
-  let csv = '';
-  let filename = '';
-
-  if (rptTab === 'trailer') {
-    const q = (rptQuery || '').toLowerCase().trim();
-    const all = [...units].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
-    const list = q ? all.filter(u => {
-      const mn = (MODELS.find(m=>m.id===u.model)?.name||'').toLowerCase();
-      return String(u.num).includes(q) || mn.includes(q) ||
-             (u.vin||'').toLowerCase().includes(q) ||
-             (u.workers||'').toLowerCase().includes(q);
-    }) : all;
-    const headers = ['Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Trabajadores','Fecha Registro','Fecha Entrega','Fotos','Notas','Mat. Reportados'];
-    csv = BOM + headers.join(';') + '\n';
-    list.forEach(u => {
-      const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
-      const pct = stagePct(u);
-      const isArch = !!u.closedAt;
-      const ec = {photo:0,note:0,material:0,stage:0};
-      u.entries.forEach(e => { if(ec[e.type]!==undefined) ec[e.type]++; });
-      const wkrs = parseWorkers(u.workers).join(', ');
-      const cFmt = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-MX') : '';
-      const dk = u.deliveryDate||u.repDeadline;
-      const dFmt = dk ? new Date(dk+'T12:00:00').toLocaleDateString('es-MX') : '';
-      const clFmt = u.closedAt ? new Date(u.closedAt).toLocaleDateString('es-MX') : '';
-      const estado = isArch ? 'Entregado' : stageLabel(u);
-      const row = [
-        u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
-        estado, pct+'%', ec.stage, wkrs, cFmt, clFmt||dFmt,
-        ec.photo, ec.note, ec.material
-      ].map(v => `"${String(v==null?'':v).replace(/"/g,'""')}"`);
-      csv += row.join(';') + '\n';
-    });
-    filename = `trailers-${todayStr()}.csv`;
-
-  } else if (rptTab === 'persona') {
-    const q = (rptQuery || '').toLowerCase().trim();
-    const empMap = {};
-    units.forEach(u => parseWorkers(u.workers).forEach(w => {
-      if (!empMap[w]) empMap[w] = [];
-      empMap[w].push(u);
-    }));
-    let workers = Object.keys(empMap).sort();
-    if (q) workers = workers.filter(w => w.toLowerCase().includes(q));
-    const headers = ['Trabajador','Total Unidades','Activas','Entregadas','Trailers'];
-    csv = BOM + headers.join(';') + '\n';
-    workers.forEach(w => {
-      const wu = empMap[w];
-      const active = wu.filter(u=>!u.closedAt).length;
-      const closed = wu.filter(u=>!!u.closedAt).length;
-      const trailerList = wu.map(u=>`T-${u.num}`).join(', ');
-      const row = [w, wu.length, active, closed, trailerList]
-        .map(v => `"${String(v==null?'':v).replace(/"/g,'""')}"`);
-      csv += row.join(';') + '\n';
-    });
-    filename = `trabajadores-${todayStr()}.csv`;
-
-  } else if (rptTab === 'periodo') {
-    const {from,to} = getPeriodRange(rptPeriod);
-    const allEntries = [];
-    units.forEach(u => u.entries.forEach(e => {
-      if (e.ts>=from && e.ts<=to) allEntries.push({...e,unit:u});
-    }));
-    allEntries.sort((a,b)=>a.ts-b.ts);
-    const headers = ['Fecha','Hora','Tráiler','Modelo','Tipo','Descripción'];
-    csv = BOM + headers.join(';') + '\n';
-    allEntries.forEach(e => {
-      const d = new Date(e.ts);
-      const fecha = d.toLocaleDateString('es-MX');
-      const hora = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-      const mo = MODELS.find(m=>m.id===e.unit.model)||{name:e.unit.model};
-      const typeLabel = {photo:'Foto',note:'Nota',material:'Material',stage:'Etapa',rollback:'Reversión',andon:'Alerta'};
-      const desc = e.type==='photo'?(e.caption||'Foto'):
-                   e.type==='stage'?e.text:
-                   e.type==='material'?`${e.matName} - ${statusLabel(e.status).txt}`:
-                   e.text||'';
-      const row = [
-        fecha, hora, `T-${e.unit.num}`, mo.name,
-        typeLabel[e.type]||e.type, desc
-      ].map(v => `"${String(v==null?'':v).replace(/"/g,'""')}"`);
-      csv += row.join(';') + '\n';
-    });
-    const pl = {day:'hoy',week:'semana',month:'mes'};
-    filename = `actividad-${pl[rptPeriod]||rptPeriod}-${todayStr()}.csv`;
-  }
-
+function csvDownload(csv, filename) {
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   showToast('Descargando reporte...');
+}
+
+function csvRow(arr) {
+  return arr.map(v => `"${String(v==null?'':v).replace(/"/g,'""')}"`).join(';') + '\n';
+}
+
+function getPeriodRangeExt(p) {
+  const s = new Date();
+  if (p === 'day')   { s.setHours(0,0,0,0); }
+  else if (p === 'week')  { s.setDate(s.getDate()-(s.getDay()===0?6:s.getDay()-1)); s.setHours(0,0,0,0); }
+  else if (p === 'month') { s.setDate(1); s.setHours(0,0,0,0); }
+  else if (p === 'year')  { s.setMonth(0,1); s.setHours(0,0,0,0); }
+  return { from: s.getTime(), to: Date.now() };
+}
+
+function openExportModal() {
+  // Build persona list
+  const empMap = {};
+  units.forEach(u => parseWorkers(u.workers).forEach(w => {
+    if (!empMap[w]) empMap[w] = [];
+    empMap[w].push(u);
+  }));
+  const workers = Object.keys(empMap).sort();
+  const list = document.getElementById('exp-persona-list');
+  if (list) {
+    if (!workers.length) {
+      list.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:6px 0">Sin trabajadores registrados</div>`;
+    } else {
+      list.innerHTML = workers.map(w => {
+        const wu = empMap[w];
+        const color = getEmpColor(w);
+        const parts = w.trim().split(/\s+/);
+        const init = parts.length>1?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():w.slice(0,2).toUpperCase();
+        const active = wu.filter(u=>!u.closedAt).length;
+        return `<div class="exp-persona-row">
+          <div style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:11px;flex-shrink:0">${init}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w}</div>
+            <div style="font-size:10px;color:var(--text3)">${wu.length} unidad${wu.length!==1?'es':''} · ${active} activa${active!==1?'s':''}</div>
+          </div>
+          <button class="exp-dl-btn" onclick="downloadPersonaReport('${w.replace(/'/g,"\\'")}')">⬇</button>
+        </div>`;
+      }).join('');
+    }
+  }
+  openModal('modal-export-report');
+}
+
+function downloadGeneralReport() {
+  const BOM = '﻿';
+  const all = [...units].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  let csv = BOM + csvRow(['Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Trabajadores','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados','VIN']);
+  all.forEach(u => {
+    const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
+    const pct = stagePct(u);
+    const isArch = !!u.closedAt;
+    const ec = {photo:0,note:0,material:0,stage:0};
+    u.entries.forEach(e => { if(ec[e.type]!==undefined) ec[e.type]++; });
+    const wkrs = parseWorkers(u.workers).join(', ');
+    const cDate = u.createdAt ? new Date(u.createdAt) : null;
+    const cFmt = cDate ? cDate.toLocaleDateString('es-MX') : '';
+    const dk = u.closedAt ? u.closedAt : (u.deliveryDate ? new Date(u.deliveryDate+'T12:00:00').getTime() : (u.repDeadline ? new Date(u.repDeadline+'T12:00:00').getTime() : null));
+    const dFmt = dk ? new Date(dk).toLocaleDateString('es-MX') : '';
+    const dias = cDate && u.closedAt ? Math.round((u.closedAt - cDate.getTime()) / 86400000) :
+                 cDate ? Math.round((Date.now() - cDate.getTime()) / 86400000) : '';
+    csv += csvRow([
+      u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
+      isArch?'Entregado':stageLabel(u), pct+'%', ec.stage,
+      wkrs, cFmt, dFmt, dias, ec.photo, ec.note, ec.material, u.vin||''
+    ]);
+  });
+  closeModal('modal-export-report');
+  csvDownload(csv, `reporte-general-${todayStr()}.csv`);
+}
+
+function downloadPersonaReport(name) {
+  const BOM = '﻿';
+  const wu = units.filter(u => parseWorkers(u.workers).includes(name));
+  const active  = wu.filter(u=>!u.closedAt);
+  const closed  = wu.filter(u=>!!u.closedAt);
+  // Sheet 1: resumen por unidad
+  let csv = BOM;
+  csv += csvRow([`REPORTE DE TRABAJADOR: ${name}`]);
+  csv += csvRow([`Generado:`, new Date().toLocaleString('es-MX')]);
+  csv += csvRow([`Total unidades:`, wu.length, `Activas:`, active.length, `Entregadas:`, closed.length]);
+  csv += '\n';
+  csv += csvRow(['Núm','Modelo','Tipo','Estado','Avance%','Etapas OK','Fecha Registro','Fecha Entrega/Cierre','Días en Piso','Fotos','Notas','Mat. Reportados']);
+  wu.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(u => {
+    const mo = MODELS.find(m=>m.id===u.model)||{name:u.model};
+    const isArch = !!u.closedAt;
+    const ec = {photo:0,note:0,material:0,stage:0};
+    u.entries.forEach(e => { if(ec[e.type]!==undefined) ec[e.type]++; });
+    const cDate = u.createdAt ? new Date(u.createdAt) : null;
+    const cFmt = cDate ? cDate.toLocaleDateString('es-MX') : '';
+    const dFmt = u.closedAt ? new Date(u.closedAt).toLocaleDateString('es-MX') : '';
+    const dias = cDate && u.closedAt ? Math.round((u.closedAt-cDate.getTime())/86400000) :
+                 cDate ? Math.round((Date.now()-cDate.getTime())/86400000) : '';
+    csv += csvRow([
+      u.num, mo.name, u.type==='rep'?'Reparación':'Producción',
+      isArch?'Entregado':stageLabel(u), stagePct(u)+'%', ec.stage,
+      cFmt, dFmt, dias, ec.photo, ec.note, ec.material
+    ]);
+  });
+  closeModal('modal-export-report');
+  const safeName = name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s]/g,'').replace(/\s+/g,'-').toLowerCase();
+  csvDownload(csv, `trabajador-${safeName}-${todayStr()}.csv`);
+}
+
+function downloadPeriodReport(period) {
+  const BOM = '﻿';
+  const {from, to} = getPeriodRangeExt(period);
+  const pl = {day:'hoy',week:'semana',month:'mes',year:'año'};
+  const plFull = {day:'Hoy',week:'Esta semana',month:'Este mes',year:'Este año'};
+  const allEntries = [];
+  units.forEach(u => u.entries.forEach(e => {
+    if (e.ts>=from && e.ts<=to) allEntries.push({...e,unit:u});
+  }));
+  allEntries.sort((a,b)=>a.ts-b.ts);
+  const photos  = allEntries.filter(e=>e.type==='photo').length;
+  const notes   = allEntries.filter(e=>e.type==='note').length;
+  const mats    = allEntries.filter(e=>e.type==='material').length;
+  const stages  = allEntries.filter(e=>e.type==='stage').length;
+  const uids    = new Set(allEntries.map(e=>e.unit.id));
+  let csv = BOM;
+  csv += csvRow([`REPORTE DE PERÍODO: ${plFull[period]}`]);
+  csv += csvRow(['Generado:', new Date().toLocaleString('es-MX')]);
+  csv += csvRow(['Desde:', new Date(from).toLocaleDateString('es-MX'), 'Hasta:', new Date(to).toLocaleDateString('es-MX')]);
+  csv += csvRow(['Total entradas:', allEntries.length, 'Unidades activas:', uids.size, 'Fotos:', photos, 'Notas:', notes, 'Materiales:', mats, 'Etapas:', stages]);
+  csv += '\n';
+  csv += csvRow(['Fecha','Hora','Tráiler','Modelo','Tipo','Descripción']);
+  const typeLabel = {photo:'Foto',note:'Nota',material:'Material',stage:'Etapa',rollback:'Reversión',andon:'Alerta'};
+  allEntries.forEach(e => {
+    const d = new Date(e.ts);
+    const fecha = d.toLocaleDateString('es-MX');
+    const hora  = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const mo = MODELS.find(m=>m.id===e.unit.model)||{name:e.unit.model};
+    const desc = e.type==='photo'?(e.caption||'Foto'):
+                 e.type==='stage'?e.text:
+                 e.type==='material'?`${e.matName} - ${statusLabel(e.status).txt}`:
+                 e.text||'';
+    csv += csvRow([fecha, hora, `T-${e.unit.num}`, mo.name, typeLabel[e.type]||e.type, desc]);
+  });
+  closeModal('modal-export-report');
+  csvDownload(csv, `actividad-${pl[period]||period}-${todayStr()}.csv`);
 }
 
 function renderSearch() {
@@ -3720,5 +3784,41 @@ setInterval(async () => {
   } catch(e) { /* silencioso */ }
 }, 10000);
 </script>
+
+<!-- ══════════════════ MODAL: EXPORTAR REPORTE ══════════════════ -->
+<div class="modal-overlay" id="modal-export-report" onclick="closeModal('modal-export-report')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88vh;overflow-y:auto;padding-bottom:8px">
+    <div class="modal-handle"></div>
+    <h2 style="margin-bottom:14px">📥 Descargar Reporte</h2>
+
+    <!-- General -->
+    <div class="exp-section">
+      <div class="exp-section-title">📊 Reporte General</div>
+      <div class="exp-section-desc">Todos los trailers — estado, avance, trabajadores, fechas, conteos de actividad</div>
+      <button class="modal-btn primary" style="margin:0" onclick="downloadGeneralReport()">⬇ Descargar Excel</button>
+    </div>
+
+    <!-- Por período -->
+    <div class="exp-section">
+      <div class="exp-section-title">📅 Por Período</div>
+      <div class="exp-section-desc">Toda la actividad registrada (fotos, notas, materiales, etapas) en el rango seleccionado</div>
+      <div class="exp-period-grid">
+        <button class="exp-period-btn" onclick="downloadPeriodReport('day')">📅 Hoy</button>
+        <button class="exp-period-btn" onclick="downloadPeriodReport('week')">📅 Esta semana</button>
+        <button class="exp-period-btn" onclick="downloadPeriodReport('month')">📅 Este mes</button>
+        <button class="exp-period-btn" onclick="downloadPeriodReport('year')">📅 Este año</button>
+      </div>
+    </div>
+
+    <!-- Por persona -->
+    <div class="exp-section">
+      <div class="exp-section-title">👤 Por Persona</div>
+      <div class="exp-section-desc">Reporte individual por trabajador — sus unidades y actividad</div>
+      <div id="exp-persona-list" style="margin-top:4px"></div>
+    </div>
+
+    <button class="modal-btn cancel" onclick="closeModal('modal-export-report')" style="margin-top:4px">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
