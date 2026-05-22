@@ -334,9 +334,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tv-topbar h1{font-size:20px;font-weight:800;flex:1}
 .tv-clock{font-size:22px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
 .tv-exit{font-size:12px;padding:6px 14px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer}
-/* TV grid — 1 col default, 2 col en pantalla grande */
-.tv-grid{display:grid;grid-template-columns:1fr;gap:14px;padding:14px;overflow-y:auto}
-@media(min-width:720px){.tv-grid{grid-template-columns:1fr 1fr}}
+/* TV slideshow */
+.tv-slideshow-wrap{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+#tv-grid{display:flex;flex-direction:column;will-change:transform;transition:transform .75s cubic-bezier(.4,0,.2,1)}
+.tv-slide{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;flex-shrink:0;box-sizing:border-box;align-content:start}
+@media(max-width:719px){.tv-slide{grid-template-columns:1fr}}
+.tv-slide-dots{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:5;pointer-events:none}
+.tv-dot{width:5px;height:5px;border-radius:3px;background:rgba(255,255,255,.18);transition:height .35s ease,background .35s ease}
+.tv-dot.active{background:var(--gold);height:18px}
 /* TV card — borde izquierdo grueso como Andon, tarjeta grande */
 /* TV CARD — overlay layout (SVG 1947×1099 viewBox) */
 .tv-card{border-radius:14px;border:2px solid var(--border);border-left-width:8px;overflow:hidden;background:var(--surface);cursor:pointer;container-type:inline-size}
@@ -496,7 +501,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="tv-clock" class="tv-clock">00:00</div>
     <div onclick="goHome()" class="tv-exit">✕ Salir</div>
   </div>
-  <div class="tv-grid" id="tv-grid"></div>
+  <div class="tv-slideshow-wrap" id="tv-slideshow-wrap">
+    <div id="tv-grid"></div>
+    <div class="tv-slide-dots" id="tv-slide-dots"></div>
+  </div>
 </div>
 
 <!-- ══════════════════ SCREEN: ASIGNACIÓN DIARIA ══════════════════ -->
@@ -1800,7 +1808,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function goHome() { activeUnitId = null; clearInterval(tvClockInterval); showScreen('screen-home'); renderHomeMenu(); }
+function goHome() { activeUnitId = null; clearInterval(tvClockInterval); clearInterval(tvAutoSlideInterval); showScreen('screen-home'); renderHomeMenu(); }
 function goUnits() { openUnits(); }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -2927,14 +2935,40 @@ function fmtDelivery(dateStr) {
 // ── TV MODE ───────────────────────────────────────────────────────────────────
 
 let tvClockInterval = null;
+let tvAutoSlideInterval = null;
+let tvSlideIndex = 0;
+let tvSlideTotal = 0;
+let tvSlideHeight = 0;
 
 function openTV() {
+  tvSlideIndex = 0;
   renderTV();
   showScreen('screen-tv');
-  // start clock
   clearInterval(tvClockInterval);
   updateTVClock();
   tvClockInterval = setInterval(updateTVClock, 1000);
+  clearInterval(tvAutoSlideInterval);
+  tvAutoSlideInterval = setInterval(tvAdvanceSlide, 8000);
+}
+
+function tvAdvanceSlide() {
+  if (tvSlideTotal <= 1) return;
+  const grid = document.getElementById('tv-grid');
+  if (!grid || !tvSlideHeight) return;
+  if (tvSlideIndex >= tvSlideTotal - 1) {
+    // Ciclo: saltar a 0 sin animación
+    grid.style.transition = 'none';
+    tvSlideIndex = 0;
+    grid.style.transform = 'translateY(0)';
+    document.querySelectorAll('.tv-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      grid.style.transition = 'transform .75s cubic-bezier(.4,0,.2,1)';
+    }));
+  } else {
+    tvSlideIndex++;
+    grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
+    document.querySelectorAll('.tv-dot').forEach((d, i) => d.classList.toggle('active', i === tvSlideIndex));
+  }
 }
 
 function updateTVClock() {
@@ -2947,17 +2981,47 @@ function updateTVClock() {
 function renderTV() {
   document.getElementById('tv-date').textContent = fmtDate(Date.now());
   const grid = document.getElementById('tv-grid');
-  const active = units.filter(u => !u.closedAt);
+  const dotsEl = document.getElementById('tv-slide-dots');
+  const active = units.filter(u => !u.closedAt).sort((a, b) => {
+    const order = {stopped:0, warning:1, waiting:2, normal:3};
+    return (order[a.andonStatus||'normal'] || 3) - (order[b.andonStatus||'normal'] || 3);
+  });
   if (!active.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:#555;font-size:18px">Sin unidades en piso</div>`;
+    grid.innerHTML = `<div class="tv-slide"><div style="grid-column:1/-1;text-align:center;padding:60px;color:#555;font-size:18px">Sin unidades en piso</div></div>`;
+    dotsEl.innerHTML = '';
+    tvSlideTotal = 1;
     return;
   }
-  grid.innerHTML = [...active]
-    .sort((a, b) => {
-      const order = {stopped:0, warning:1, waiting:2, normal:3};
-      return (order[a.andonStatus||'normal'] || 3) - (order[b.andonStatus||'normal'] || 3);
-    })
-    .map(u => tvCard(u)).join('');
+  const perSlide = window.innerWidth >= 720 ? 2 : 1;
+  const slides = [];
+  for (let i = 0; i < active.length; i += perSlide) slides.push(active.slice(i, i + perSlide));
+  tvSlideTotal = slides.length;
+  tvSlideIndex = Math.min(tvSlideIndex, tvSlideTotal - 1);
+
+  // Render sin transición para no animar el re-render del sync
+  grid.style.transition = 'none';
+  grid.innerHTML = slides.map(group =>
+    `<div class="tv-slide">${group.map(u => tvCard(u)).join('')}</div>`
+  ).join('');
+
+  // Altura de cada slide = altura del contenedor
+  const wrap = document.getElementById('tv-slideshow-wrap');
+  tvSlideHeight = wrap ? wrap.clientHeight : window.innerHeight - 60;
+  grid.querySelectorAll('.tv-slide').forEach(s => s.style.height = tvSlideHeight + 'px');
+  grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    grid.style.transition = 'transform .75s cubic-bezier(.4,0,.2,1)';
+  }));
+
+  // Dots
+  if (tvSlideTotal > 1) {
+    dotsEl.innerHTML = Array.from({length: tvSlideTotal}, (_, i) =>
+      `<div class="tv-dot${i === tvSlideIndex ? ' active' : ''}"></div>`
+    ).join('');
+  } else {
+    dotsEl.innerHTML = '';
+  }
 }
 
 function tvCard(u) {
