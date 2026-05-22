@@ -336,7 +336,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .tv-exit{font-size:12px;padding:6px 14px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer}
 /* TV slideshow */
 .tv-slideshow-wrap{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
-#tv-grid{display:flex;flex-direction:column;will-change:transform;transition:transform .75s cubic-bezier(.4,0,.2,1)}
+#tv-grid{display:flex;flex-direction:column;will-change:transform;transition:transform 1.4s ease-in-out}
 .tv-slide{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;flex-shrink:0;box-sizing:border-box;align-content:start}
 @media(max-width:719px){.tv-slide{grid-template-columns:1fr}}
 .tv-slide-dots{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:5;pointer-events:none}
@@ -2942,13 +2942,16 @@ let tvSlideHeight = 0;
 
 function openTV() {
   tvSlideIndex = 0;
-  renderTV();
   showScreen('screen-tv');
   clearInterval(tvClockInterval);
   updateTVClock();
   tvClockInterval = setInterval(updateTVClock, 1000);
-  clearInterval(tvAutoSlideInterval);
-  tvAutoSlideInterval = setInterval(tvAdvanceSlide, 8000);
+  // Esperar a que la pantalla esté visible para medir altura correctamente
+  requestAnimationFrame(() => {
+    renderTV();
+    clearInterval(tvAutoSlideInterval);
+    tvAutoSlideInterval = setInterval(tvAdvanceSlide, 15000);
+  });
 }
 
 function tvAdvanceSlide() {
@@ -2962,7 +2965,7 @@ function tvAdvanceSlide() {
     grid.style.transform = 'translateY(0)';
     document.querySelectorAll('.tv-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      grid.style.transition = 'transform .75s cubic-bezier(.4,0,.2,1)';
+      grid.style.transition = 'transform 1.4s ease-in-out';
     }));
   } else {
     tvSlideIndex++;
@@ -3011,7 +3014,7 @@ function renderTV() {
   grid.style.transform = `translateY(-${tvSlideIndex * tvSlideHeight}px)`;
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    grid.style.transition = 'transform .75s cubic-bezier(.4,0,.2,1)';
+    grid.style.transition = 'transform 1.4s ease-in-out';
   }));
 
   // Dots
